@@ -7,7 +7,6 @@
         <p class="text-gray-600">Gestión de proveedores y empresas</p>
       </div>
       <button
-        v-if="authStore.canEdit"
         @click="openModal()"
         class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
       >
@@ -29,8 +28,17 @@
       />
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="bg-white rounded-xl shadow-lg p-8 text-center">
+      <div class="inline-block animate-spin">
+        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+      </div>
+    </div>
+
     <!-- Table -->
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div v-else class="bg-white rounded-xl shadow-lg overflow-hidden">
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
@@ -66,7 +74,12 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                 <button @click="openModal(provider)" class="text-blue-600 hover:text-blue-900 font-semibold">Editar</button>
-                <button v-if="authStore.canDelete" @click="deleteProvider(provider.id)" class="text-red-600 hover:text-red-900 font-semibold">Eliminar</button>
+                <button @click="deleteProvider(provider.id)" class="text-red-600 hover:text-red-900 font-semibold">Eliminar</button>
+              </td>
+            </tr>
+            <tr v-if="providers.length === 0">
+              <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                No hay proveedores registrados
               </td>
             </tr>
           </tbody>
@@ -165,10 +178,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useAuthStore } from '../stores/auth'
 import api from '../services/api'
 
-const authStore = useAuthStore()
 const providers = ref([])
 const showModal = ref(false)
 const loading = ref(false)
@@ -188,37 +199,7 @@ const form = ref({
   notes: ''
 })
 
-const loadProviders = async () => {
-  try {
-    const response = await api.getProviders({ search: search.value, limit: 100 })
-    providers.value = response.data.providers
-  } catch (error) {
-    console.error('Error:', error)
-  }
-}
-
-const openModal = (provider = null) => {
-  editingProvider.value = provider
-  if (provider) {
-    form.value = {
-      businessName: provider.business_name,
-      nit: provider.nit,
-      contactName: provider.contact_name,
-      phone: provider.phone,
-      email: provider.email,
-      address: provider.address,
-      city: provider.city,
-      category: provider.category,
-      paymentTerms: provider.payment_terms,
-      notes: provider.notes
-    }
-  }
-  showModal.value = true
-}
-
-const closeModal = () => {
-  showModal.value = false
-  editingProvider.value = null
+const resetForm = () => {
   form.value = {
     businessName: '',
     nit: '',
@@ -233,34 +214,74 @@ const closeModal = () => {
   }
 }
 
-const saveProvider = async () => {
+const loadProviders = async () => {
   loading.value = true
   try {
-    if (editingProvider.value) {
-      await api.updateProvider(editingProvider.value.id, form.value)
-      alert('Proveedor actualizado exitosamente')
-    } else {
-      await api.createProvider(form.value)
-      alert('Proveedor creado exitosamente')
-    }
-    closeModal()
-    loadProviders()
+    const { data } = await api.getProviders({ search: search.value, limit: 100 })
+    providers.value = data.providers || []
   } catch (error) {
-    alert('Error: ' + (error.response?.data?.error || error.message))
+    console.error('Error cargando proveedores:', error)
+    alert('Error al cargar proveedores')
   } finally {
     loading.value = false
   }
 }
 
+const openModal = (provider = null) => {
+  resetForm()
+  if (provider) {
+    editingProvider.value = provider
+    form.value = {
+      businessName: provider.business_name,
+      nit: provider.nit,
+      contactName: provider.contact_name,
+      phone: provider.phone,
+      email: provider.email,
+      address: provider.address,
+      city: provider.city,
+      category: provider.category,
+      paymentTerms: provider.payment_terms,
+      notes: provider.notes
+    }
+  } else {
+    editingProvider.value = null
+  }
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+  editingProvider.value = null
+  resetForm()
+}
+
+const saveProvider = async () => {
+  try {
+    if (editingProvider.value) {
+      await api.updateProvider(editingProvider.value.id, form.value)
+      alert('Proveedor actualizado correctamente')
+    } else {
+      await api.createProvider(form.value)
+      alert('Proveedor creado correctamente')
+    }
+    closeModal()
+    loadProviders()
+  } catch (error) {
+    console.error('Error guardando proveedor:', error)
+    alert('Error al guardar proveedor: ' + error.response?.data?.error)
+  }
+}
+
 const deleteProvider = async (id) => {
-  if (!confirm('¿Estás seguro de eliminar este proveedor?')) return
+  if (!confirm('¿Está seguro de que desea eliminar este proveedor?')) return
   
   try {
     await api.deleteProvider(id)
-    alert('Proveedor eliminado')
+    alert('Proveedor eliminado correctamente')
     loadProviders()
   } catch (error) {
-    alert('Error: ' + (error.response?.data?.error || error.message))
+    console.error('Error eliminando proveedor:', error)
+    alert('Error al eliminar proveedor: ' + error.response?.data?.error)
   }
 }
 

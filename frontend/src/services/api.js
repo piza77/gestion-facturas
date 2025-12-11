@@ -84,7 +84,7 @@ export default {
   deleteInvoice: (id) => api.delete(`/invoices/${id}`),
   
   // Invoice Types
-  getInvoiceTypes: () => api.get('/invoice-types'),
+  getInvoiceTypes: (params) => api.get('/invoice-types', { params }),
   
   // Dashboard
   getDashboardStats: (params) => api.get('/dashboard/stats', { params }),

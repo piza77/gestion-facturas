@@ -92,10 +92,6 @@ class InvoiceModel {
 
     sql += ' ORDER BY i.issue_date DESC, i.created_at DESC';
 
-    if (filters.limit) {
-      sql += ' LIMIT ? OFFSET ?';
-      params.push(parseInt(filters.limit), parseInt(filters.offset || 0));
-    }
 
     return await db.query(sql, params);
   }

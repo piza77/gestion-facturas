@@ -17,7 +17,12 @@ export const useAuthStore = defineStore('auth', {
     isViewer: (state) => state.user?.role === 'viewer',
     canEdit: (state) => ['admin', 'user'].includes(state.user?.role),
     canDelete: (state) => state.user?.role === 'admin',
-    userName: (state) => state.user ? `${state.user.firstName} ${state.user.lastName}` : ''
+    userName: (state) => {
+      if (!state.user) return ''
+      const firstName = state.user.firstName || state.user.first_name || ''
+      const lastName = state.user.lastName || state.user.last_name || ''
+      return `${firstName} ${lastName}`.trim()
+    }
   },
 
   actions: {

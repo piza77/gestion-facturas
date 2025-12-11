@@ -4,12 +4,11 @@
     <div class="flex justify-between items-center">
       <div>
         <h1 class="text-3xl font-bold text-gray-900">Empleados</h1>
-        <p class="text-gray-600">Gestión de empleados de la empresa</p>
+        <p class="text-gray-600">Gestión de empleados y personal</p>
       </div>
       <button
-        v-if="authStore.canEdit"
         @click="openModal()"
-        class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+        class="bg-gradient-to-r from-purple-600 to-purple-400 hover:from-purple-700 hover:to-purple-500 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -18,74 +17,65 @@
       </button>
     </div>
 
-    <!-- Search & Filters -->
+    <!-- Search -->
     <div class="bg-white rounded-xl shadow-md p-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <input
-          v-model="search"
-          @input="loadEmployees"
-          type="text"
-          placeholder="🔍 Buscar por nombre o cédula..."
-          class="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <select v-model="filters.status" @change="loadEmployees" class="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
-          <option value="">Todos los estados</option>
-          <option value="active">Activo</option>
-          <option value="inactive">Inactivo</option>
-          <option value="vacation">Vacaciones</option>
-        </select>
-        <input
-          v-model="filters.department"
-          @input="loadEmployees"
-          type="text"
-          placeholder="Filtrar por departamento..."
-          class="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
+      <input
+        v-model="search"
+        @input="loadEmployees"
+        type="text"
+        placeholder="🔍 Buscar por nombre, email o documento..."
+        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+      />
+    </div>
+
+    <!-- Loading -->
+    <div v-if="loading" class="bg-white rounded-xl shadow-lg p-8 text-center">
+      <div class="inline-block animate-spin">
+        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
       </div>
     </div>
 
     <!-- Table -->
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div v-else class="bg-white rounded-xl shadow-lg overflow-hidden">
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
             <tr>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Empleado</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Identificación</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Cargo</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Departamento</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Contacto</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Estado</th>
-              <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase">Acciones</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nombre</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Teléfono</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Posición</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Centro de Costo</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Estado</th>
+              <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="employee in employees" :key="employee.id" class="hover:bg-gray-50 transition-colors">
               <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                    {{ employee.first_name?.[0] }}{{ employee.last_name?.[0] }}
-                  </div>
-                  <div>
-                    <div class="font-medium text-gray-900">{{ employee.first_name }} {{ employee.last_name }}</div>
-                    <div class="text-sm text-gray-500">{{ employee.email }}</div>
-                  </div>
-                </div>
+                <div class="font-medium text-gray-900">{{ employee.first_name }} {{ employee.last_name }}</div>
+                <div class="text-sm text-gray-500">{{ employee.identification_number }}</div>
               </td>
-              <td class="px-6 py-4">
-                <div class="text-sm text-gray-900">{{ employee.identification_type }}: {{ employee.identification_number }}</div>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-900">{{ employee.position }}</td>
-              <td class="px-6 py-4 text-sm text-gray-900">{{ employee.department }}</td>
-              <td class="px-6 py-4 text-sm text-gray-500">{{ employee.phone || '-' }}</td>
-              <td class="px-6 py-4">
-                <span :class="getStatusClass(employee.status)" class="px-3 py-1 text-xs font-semibold rounded-full">
-                  {{ getStatusLabel(employee.status) }}
+              <td class="px-6 py-4 text-sm text-gray-900">{{ employee.email }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ employee.phone || '-' }}</td>
+              <td class="px-6 py-4 text-sm text-gray-900">{{ employee.position || '-' }}</td>
+              <td class="px-6 py-4 text-sm text-gray-900">{{ employee.cost_center_name || '-' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span :class="employee.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" 
+                      class="px-3 py-1 text-xs font-semibold rounded-full">
+                  {{ employee.is_active ? 'Activo' : 'Inactivo' }}
                 </span>
               </td>
-              <td class="px-6 py-4 text-right space-x-3">
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                 <button @click="openModal(employee)" class="text-blue-600 hover:text-blue-900 font-semibold">Editar</button>
-                <button v-if="authStore.canDelete" @click="deleteEmployee(employee.id)" class="text-red-600 hover:text-red-900 font-semibold">Eliminar</button>
+                <button @click="deleteEmployee(employee.id)" class="text-red-600 hover:text-red-900 font-semibold">Eliminar</button>
+              </td>
+            </tr>
+            <tr v-if="employees.length === 0">
+              <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                No hay empleados registrados
               </td>
             </tr>
           </tbody>
@@ -95,8 +85,8 @@
 
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-purple-400 text-white p-6 rounded-t-2xl">
           <div class="flex justify-between items-center">
             <h2 class="text-2xl font-bold">{{ editingEmployee ? 'Editar Empleado' : 'Nuevo Empleado' }}</h2>
             <button @click="closeModal" class="text-white hover:text-gray-200">
@@ -110,66 +100,88 @@
         <form @submit.prevent="saveEmployee" class="p-6 space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Nombres *</label>
-              <input v-model="form.firstName" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" />
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Nombre *</label>
+              <input v-model="form.firstName" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
             </div>
+            
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Apellidos *</label>
-              <input v-model="form.lastName" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" />
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Apellido *</label>
+              <input v-model="form.lastName" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
             </div>
+
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo ID *</label>
-              <select v-model="form.identificationType" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
-                <option value="CC">Cédula de Ciudadanía</option>
-                <option value="CE">Cédula de Extranjería</option>
-                <option value="TI">Tarjeta de Identidad</option>
-                <option value="Pasaporte">Pasaporte</option>
-              </select>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
+              <input v-model="form.email" type="email" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
             </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Número ID *</label>
-              <input v-model="form.identificationNumber" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Cargo *</label>
-              <input v-model="form.position" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Departamento *</label>
-              <input v-model="form.department" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-              <input v-model="form.email" type="email" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" />
-            </div>
+
             <div>
               <label class="block text-sm font-semibold text-gray-700 mb-2">Teléfono</label>
-              <input v-model="form.phone" type="tel" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" />
+              <input v-model="form.phone" type="tel" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
             </div>
+
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Fecha de Contratación *</label>
-              <input v-model="form.hireDate" type="date" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
-              <select v-model="form.status" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
-                <option value="active">Activo</option>
-                <option value="inactive">Inactivo</option>
-                <option value="vacation">Vacaciones</option>
-                <option value="suspended">Suspendido</option>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Documento *</label>
+              <select v-model="form.identificationType" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                <option value="">Seleccionar</option>
+                <option value="CC">Cédula</option>
+                <option value="CE">Cédula Extranjería</option>
+                <option value="NIT">NIT</option>
+                <option value="PASSPORT">Pasaporte</option>
               </select>
             </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Número de Documento *</label>
+              <input v-model="form.identificationNumber" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Posición *</label>
+              <input v-model="form.position" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Departamento</label>
+              <input v-model="form.department" type="text" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Centro de Costo</label>
+              <select v-model="form.costCenterId" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                <option value="">Seleccionar centro</option>
+                <option v-for="cc in costCenters" :key="cc.id" :value="cc.id">{{ cc.name }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Fecha de Contratación</label>
+              <input v-model="form.hireDate" type="date" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Salario</label>
+              <input v-model.number="form.salary" type="number" step="0.01" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
+              <select v-model="form.isActive" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                <option :value="true">Activo</option>
+                <option :value="false">Inactivo</option>
+              </select>
+            </div>
+
             <div class="col-span-2">
               <label class="block text-sm font-semibold text-gray-700 mb-2">Notas</label>
-              <textarea v-model="form.notes" rows="3" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
+              <textarea v-model="form.notes" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
             </div>
           </div>
 
-          <div class="flex gap-3 pt-4">
-            <button type="submit" :disabled="loading" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 rounded-xl font-semibold disabled:opacity-50 shadow-lg">
-              {{ loading ? 'Guardando...' : 'Guardar' }}
+          <div class="flex gap-4 pt-4">
+            <button type="submit" class="flex-1 bg-gradient-to-r from-purple-600 to-purple-400 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition">
+              {{ editingEmployee ? 'Actualizar' : 'Crear' }} Empleado
             </button>
-            <button type="button" @click="closeModal" class="px-6 py-3 border-2 border-gray-300 rounded-xl font-semibold hover:bg-gray-50">
+            <button type="button" @click="closeModal" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition">
               Cancelar
             </button>
           </div>
@@ -181,60 +193,81 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useAuthStore } from '../stores/auth'
 import api from '../services/api'
 
-const authStore = useAuthStore()
 const employees = ref([])
-const showModal = ref(false)
+const costCenters = ref([])
 const loading = ref(false)
+const showModal = ref(false)
 const editingEmployee = ref(null)
 const search = ref('')
-const filters = ref({ status: '', department: '' })
 
 const form = ref({
   firstName: '',
   lastName: '',
-  identificationType: 'CC',
+  email: '',
+  phone: '',
+  identificationType: '',
   identificationNumber: '',
   position: '',
   department: '',
-  email: '',
-  phone: '',
-  hireDate: new Date().toISOString().split('T')[0],
-  status: 'active',
+  costCenterId: '',
+  hireDate: '',
+  salary: 0,
+  isActive: true,
   notes: ''
 })
 
+const resetForm = () => {
+  form.value = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    identificationType: '',
+    identificationNumber: '',
+    position: '',
+    department: '',
+    costCenterId: '',
+    hireDate: '',
+    salary: 0,
+    isActive: true,
+    notes: ''
+  }
+}
+
 const loadEmployees = async () => {
+  loading.value = true
   try {
-    const response = await api.getEmployees({ 
-      search: search.value, 
-      ...filters.value,
-      limit: 100 
+    const { data } = await api.getEmployees({
+      search: search.value,
+      limit: 50
     })
-    employees.value = response.data.employees || response.data
+    employees.value = data.employees || []
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error cargando empleados:', error)
+    alert('Error al cargar empleados')
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadCostCenters = async () => {
+  try {
+    const { data } = await api.getCostCenters({ limit: 100 })
+    costCenters.value = data.centers || []
+  } catch (error) {
+    console.error('Error cargando centros de costo:', error)
   }
 }
 
 const openModal = (employee = null) => {
-  editingEmployee.value = employee
+  resetForm()
   if (employee) {
-    form.value = {
-      firstName: employee.first_name,
-      lastName: employee.last_name,
-      identificationType: employee.identification_type,
-      identificationNumber: employee.identification_number,
-      position: employee.position,
-      department: employee.department,
-      email: employee.email,
-      phone: employee.phone,
-      hireDate: employee.hire_date,
-      status: employee.status,
-      notes: employee.notes
-    }
+    editingEmployee.value = employee
+    form.value = { ...employee }
+  } else {
+    editingEmployee.value = null
   }
   showModal.value = true
 }
@@ -242,72 +275,43 @@ const openModal = (employee = null) => {
 const closeModal = () => {
   showModal.value = false
   editingEmployee.value = null
-  form.value = {
-    firstName: '',
-    lastName: '',
-    identificationType: 'CC',
-    identificationNumber: '',
-    position: '',
-    department: '',
-    email: '',
-    phone: '',
-    hireDate: new Date().toISOString().split('T')[0],
-    status: 'active',
-    notes: ''
-  }
+  resetForm()
 }
 
 const saveEmployee = async () => {
-  loading.value = true
   try {
     if (editingEmployee.value) {
       await api.updateEmployee(editingEmployee.value.id, form.value)
-      alert('Empleado actualizado')
+      alert('Empleado actualizado correctamente')
     } else {
       await api.createEmployee(form.value)
-      alert('Empleado creado')
+      alert('Empleado creado correctamente')
     }
     closeModal()
     loadEmployees()
   } catch (error) {
-    alert('Error: ' + (error.response?.data?.error || error.message))
-  } finally {
-    loading.value = false
+    console.error('Error guardando empleado:', error)
+    alert('Error al guardar empleado: ' + error.response?.data?.error)
   }
 }
 
 const deleteEmployee = async (id) => {
-  if (!confirm('¿Eliminar este empleado?')) return
-  try {
-    await api.deleteEmployee(id)
-    alert('Empleado eliminado')
-    loadEmployees()
-  } catch (error) {
-    alert('Error: ' + (error.response?.data?.error || error.message))
+  if (confirm('¿Está seguro de que desea eliminar este empleado?')) {
+    try {
+      await api.deleteEmployee(id)
+      alert('Empleado eliminado correctamente')
+      loadEmployees()
+    } catch (error) {
+      console.error('Error eliminando empleado:', error)
+      alert('Error al eliminar empleado: ' + error.response?.data?.error)
+    }
   }
-}
-
-const getStatusClass = (status) => {
-  const classes = {
-    active: 'bg-green-100 text-green-800',
-    inactive: 'bg-gray-100 text-gray-800',
-    vacation: 'bg-blue-100 text-blue-800',
-    suspended: 'bg-red-100 text-red-800'
-  }
-  return classes[status] || classes.active
-}
-
-const getStatusLabel = (status) => {
-  const labels = {
-    active: 'Activo',
-    inactive: 'Inactivo',
-    vacation: 'Vacaciones',
-    suspended: 'Suspendido'
-  }
-  return labels[status] || status
 }
 
 onMounted(() => {
   loadEmployees()
+  loadCostCenters()
 })
 </script>
+
+<style scoped></style>

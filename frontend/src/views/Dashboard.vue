@@ -104,13 +104,13 @@
           <div v-for="cc in costCenters" :key="cc.id" class="p-3 bg-gray-50 rounded-lg">
             <div class="flex justify-between items-center mb-2">
               <p class="font-medium text-gray-900">{{ cc.name }}</p>
-              <p class="text-sm font-semibold text-gray-700">{{ cc.budget_used_percentage.toFixed(1) }}%</p>
+              <p class="text-sm font-semibold text-gray-700">{{ Number(cc.budget_used_percentage).toFixed(1) }}%</p>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
               <div 
                 class="h-2 rounded-full transition-all"
-                :class="getProgressColor(cc.budget_used_percentage)"
-                :style="{ width: Math.min(cc.budget_used_percentage, 100) + '%' }"
+                :class="getProgressColor(Number(cc.budget_used_percentage))"
+                :style="{ width: Math.min(Number(cc.budget_used_percentage), 100) + '%' }"
               ></div>
             </div>
             <div class="flex justify-between mt-1 text-xs text-gray-500">

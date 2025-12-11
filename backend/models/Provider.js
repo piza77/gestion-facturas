@@ -50,11 +50,6 @@ class ProviderModel {
 
     sql += ' ORDER BY business_name ASC';
 
-    if (filters.limit) {
-      sql += ' LIMIT ? OFFSET ?';
-      params.push(parseInt(filters.limit), parseInt(filters.offset || 0));
-    }
-
     return await db.query(sql, params);
   }
 

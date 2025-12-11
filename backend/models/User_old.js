@@ -5,26 +5,24 @@ const db = require('../config/database');
 class UserModel {
   
   static async create(data) {
-    // Validar y limpiar datos - asegurar que nada sea undefined
-    const name = String(data.name || '').trim();
-    const email = String(data.email || '').trim().toLowerCase();
-    const password = String(data.password || '').trim();
-    const role = String(data.role || 'user').trim();
-    const isActive = data.isActive !== false ? 1 : 0;
+    // Limpiar datos undefined
+    const cleanData = {};
+    Object.keys(data).forEach(key => {
+      cleanData[key] = data[key] !== undefined ? data[key] : null;
+    });
 
-    // Validar que email no esté vacío
-    if (!email) {
-      throw new Error('El email es requerido');
-    }
+    const {
+      name, email, password, role, isActive, notes
+    } = cleanData;
 
     // Si viene 'name', dividirlo en firstName y lastName
     let firstName = '';
     let lastName = '';
     
     if (name) {
-      const nameParts = name.split(' ');
-      firstName = (nameParts[0] || '').trim();
-      lastName = (nameParts.slice(1).join(' ') || '').trim();
+      const nameParts = String(name).trim().split(' ');
+      firstName = nameParts[0] || '';
+      lastName = nameParts.slice(1).join(' ') || '';
     }
 
     // Verificar email único
@@ -40,12 +38,15 @@ class UserModel {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const id = uuidv4();
+    const isActiveValue = isActive !== false ? 1 : 0;
+    const notesValue = notes === null ? null : (notes ? String(notes) : null);
 
     await db.query(
       `INSERT INTO users 
-       (id, first_name, last_name, email, password, role, is_active) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, firstName, lastName, email, hashedPassword, role, isActive]
+       (id, first_name, last_name, email, password, role, is_active, notes, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [id, firstName, lastName, email, hashedPassword, 
+       role || 'user', isActiveValue, notesValue]
     );
 
     return this.findById(id);
@@ -80,6 +81,11 @@ class UserModel {
 
     sql += ' ORDER BY first_name ASC, last_name ASC';
 
+    if (filters.limit) {
+      sql += ' LIMIT ? OFFSET ?';
+      params.push(parseInt(filters.limit), parseInt(filters.offset || 0));
+    }
+
     return await db.query(sql, params);
   }
 
@@ -110,7 +116,7 @@ class UserModel {
 
     // Procesar campos especiales
     if (data.name) {
-      const nameParts = String(data.name).trim().split(' ');
+      const nameParts = data.name.trim().split(' ');
       fields.push('first_name = ?');
       values.push(nameParts[0] || '');
       fields.push('last_name = ?');
@@ -119,21 +125,16 @@ class UserModel {
 
     // No permitir actualizar password directamente desde aquí
     Object.keys(data).forEach(key => {
-      if (key === 'password' || key === 'name' || key === 'notes') return;
+      if (key === 'password' || key === 'name') return;
       
       // Validar que el valor no sea undefined
-      let val = data[key];
-      if (val === undefined) {
-        val = null;
-      } else if (typeof val === 'boolean') {
-        val = val ? 1 : 0;
-      } else if (val !== null) {
-        val = String(val);
+      if (data[key] === undefined) {
+        data[key] = null;
       }
       
       const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
       fields.push(`${snakeKey} = ?`);
-      values.push(val);
+      values.push(data[key]);
     });
 
     if (fields.length === 0) return this.findById(id);
