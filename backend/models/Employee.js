@@ -13,13 +13,18 @@ class EmployeeModel {
     const identificationNumber = data.identificationNumber || data.identification_number;
     const position = data.position;
     const department = data.department;
-    const hireDate = data.hireDate || data.hire_date;
+    let hireDate = data.hireDate || data.hire_date;
     const notes = data.notes || null;
     const userId = data.userId || data.user_id || null;
 
     // Validar campos requeridos
     if (!firstName || !lastName || !email || !identificationType || !identificationNumber || !position || !department || !hireDate) {
       throw new Error('Faltan campos requeridos');
+    }
+
+    // Formatear fecha ISO a YYYY-MM-DD
+    if (hireDate && typeof hireDate === 'string' && hireDate.includes('T')) {
+      hireDate = hireDate.split('T')[0];
     }
 
     // Verificar email único
@@ -92,9 +97,18 @@ class EmployeeModel {
     const values = [];
 
     Object.keys(data).forEach(key => {
+      let value = data[key];
+      
+      // Formatear fechas ISO a YYYY-MM-DD
+      if ((key === 'hireDate' || key === 'hire_date') && value && typeof value === 'string') {
+        if (value.includes('T')) {
+          value = value.split('T')[0];
+        }
+      }
+      
       const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
       fields.push(`${snakeKey} = ?`);
-      values.push(data[key]);
+      values.push(value);
     });
 
     if (fields.length === 0) return this.findById(id);

@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node seeders/seed.js"
+    "seed": "node seeders/seed.js",
+    "migrate": "node migrations/add_invoice_fields.js",
+    "migrate:controls": "node migrations/add_invoice_controls.js",
+    "migrate:status": "node migrations/add_invoice_status_tracking.js"
   },
   "keywords": ["facturas", "invoices", "nodejs", "express", "mysql"],
   "author": "",

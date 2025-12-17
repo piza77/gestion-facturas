@@ -48,9 +48,30 @@ exports.createInvoice = async (req, res) => {
   try {
     // Filtrar undefined y convertir a valores válidos
     const cleanBody = {};
+    const dateFields = ['issue_date', 'due_date'];
+    const numericFields = ['subtotal', 'tax', 'discount', 'total'];
+    
     Object.keys(req.body).forEach(key => {
-      const value = req.body[key];
-      cleanBody[key] = value === undefined || value === '' ? null : value;
+      let value = req.body[key];
+      
+      // Para campos de fecha, incluirlos aunque sean strings
+      if (dateFields.includes(key)) {
+        if (value !== undefined && value !== null && value !== '') {
+          cleanBody[key] = value;
+        }
+      }
+      // Para campos numéricos, convertir
+      else if (numericFields.includes(key)) {
+        cleanBody[key] = value === '' || value === null ? 0 : parseFloat(value) || 0;
+      }
+      // Para otros campos, filtrar vacíos
+      else if (value !== undefined && value !== null && value !== '') {
+        // Intentar convertir a número si parece serlo
+        if (!isNaN(value) && typeof value === 'string' && value.trim() !== '') {
+          value = parseFloat(value);
+        }
+        cleanBody[key] = value;
+      }
     });
 
     const data = {
@@ -75,9 +96,52 @@ exports.updateInvoice = async (req, res) => {
   try {
     // Filtrar undefined y convertir a valores válidos
     const data = {};
+    const dateFields = ['issue_date', 'due_date'];
+    const numericFields = ['subtotal', 'tax', 'discount', 'total'];
+    const booleanFields = ['is_reimbursable'];
+    const textFields = ['description', 'notes', 'order_number', 'invoice_number'];
+    
     Object.keys(req.body).forEach(key => {
-      const value = req.body[key];
-      data[key] = value === undefined || value === '' ? null : value;
+      let value = req.body[key];
+      
+      // Para campos de fecha, incluirlos
+      if (dateFields.includes(key)) {
+        if (value !== undefined && value !== null && value !== '') {
+          data[key] = value;
+        }
+      }
+      // Para campos numéricos, convertir
+      else if (numericFields.includes(key)) {
+        if (value !== undefined) {
+          data[key] = value === '' || value === null ? 0 : parseFloat(value) || 0;
+        }
+      }
+      // Para campos booleanos/binarios
+      else if (booleanFields.includes(key)) {
+        if (value !== undefined) {
+          // Convertir a 0 o 1
+          data[key] = (value == true || value == 1 || value == '1') ? 1 : 0;
+        }
+      }
+      // Para campos de texto
+      else if (textFields.includes(key)) {
+        if (value !== undefined) {
+          // Permitir null para campos opcionales, pero convertir strings vacíos a null
+          data[key] = value === '' ? null : value;
+        }
+      }
+      // Para otros campos
+      else if (value !== undefined && value !== null) {
+        // Convertir strings numéricos
+        if (!isNaN(value) && typeof value === 'string' && value.trim() !== '') {
+          value = parseFloat(value);
+        }
+        // Convertir strings vacíos a null
+        if (value === '') {
+          value = null;
+        }
+        data[key] = value;
+      }
     });
 
     if (req.file) {
@@ -98,6 +162,17 @@ exports.updateInvoice = async (req, res) => {
 exports.updateInvoiceStatus = async (req, res) => {
   try {
     const { status, reason } = req.body;
+    
+    // Validar que se proporcionó un estado
+    if (!status) {
+      return res.status(400).json({ error: 'Estado es requerido' });
+    }
+    
+    // Validar que se proporcionó un ID
+    if (!req.params.id) {
+      return res.status(400).json({ error: 'ID de factura es requerido' });
+    }
+    
     const invoice = await InvoiceModel.updateStatus(
       req.params.id,
       status,
@@ -109,6 +184,7 @@ exports.updateInvoiceStatus = async (req, res) => {
       invoice
     });
   } catch (error) {
+    console.error('Error en updateInvoiceStatus:', error.message);
     res.status(400).json({ error: error.message });
   }
 };

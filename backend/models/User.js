@@ -108,7 +108,7 @@ class UserModel {
     const fields = [];
     const values = [];
 
-    // Procesar campos especiales
+    // Procesar campos especiales de nombre
     if (data.name) {
       const nameParts = String(data.name).trim().split(' ');
       fields.push('first_name = ?');
@@ -117,9 +117,20 @@ class UserModel {
       values.push(nameParts.slice(1).join(' ') || '');
     }
 
+    // Manejar firstName y lastName directamente
+    if (data.firstName || data.first_name) {
+      fields.push('first_name = ?');
+      values.push(data.firstName || data.first_name || '');
+    }
+
+    if (data.lastName || data.last_name) {
+      fields.push('last_name = ?');
+      values.push(data.lastName || data.last_name || '');
+    }
+
     // No permitir actualizar password directamente desde aquí
     Object.keys(data).forEach(key => {
-      if (key === 'password' || key === 'name' || key === 'notes') return;
+      if (['password', 'name', 'firstName', 'lastName', 'first_name', 'last_name', 'notes'].includes(key)) return;
       
       // Validar que el valor no sea undefined
       let val = data[key];

@@ -4,30 +4,108 @@ const db = require('../config/database');
 class InvoiceModel {
   
   static async create(data) {
+    // Limpiar los datos - convertir undefined a null
     const {
-      invoiceNumber, invoiceTypeId, providerId, costCenterId, employeeId,
-      issueDate, dueDate, subtotal, tax, discount, total,
-      description, notes, createdBy, filePath, fileName
+      invoice_number, invoice_type_id, provider_id, cost_center_id, employee_id, order_number,
+      issue_date, due_date, subtotal, tax, discount, total, is_reimbursable,
+      description, notes, createdBy, filePath, fileName,
+      // Autorizaciones
+      admin_director_approved, upstream_director_approved, hr_director_approved,
+      finance_director_approved, general_director_approved,
+      // Registro Contable
+      accounting_municipality, accounting_registration_date, accounting_document_type,
+      accounting_document_number, accounting_dian_number, accounting_observations,
+      accounting_registered_by,
+      // Análisis Contable
+      analyst_good_seal_approved, analyst_review_date, analyst_xml_file_path,
+      analyst_xml_file_name, analyst_observations, analyst_reviewed_by,
+      // Control de Pago
+      payment_date, payment_receipt_file_path, payment_receipt_file_name,
+      payment_amount, payment_observations, payment_processed_by
     } = data;
+
+    // Validar que los campos requeridos no sean null/undefined
+    if (!invoice_number || !invoice_type_id || !provider_id || !cost_center_id || !issue_date) {
+      throw new Error('Faltan campos requeridos');
+    }
 
     const existing = await db.query(
       'SELECT id FROM invoices WHERE invoice_number = ?',
-      [invoiceNumber]
+      [invoice_number]
     );
     if (existing.length > 0) {
       throw new Error('Ya existe una factura con ese número');
     }
 
     const id = uuidv4();
+    
+    // Preparar valores seguros para la query
+    const values = [
+      id,
+      invoice_number || null,
+      invoice_type_id || null,
+      provider_id || null,
+      cost_center_id || null,
+      employee_id || null,
+      order_number || null,
+      issue_date || null,
+      due_date || null,
+      (subtotal !== undefined && subtotal !== null && subtotal !== '') ? parseFloat(subtotal) : 0,
+      (tax !== undefined && tax !== null && tax !== '') ? parseFloat(tax) : 0,
+      (discount !== undefined && discount !== null && discount !== '') ? parseFloat(discount) : 0,
+      (total !== undefined && total !== null && total !== '') ? parseFloat(total) : 0,
+      is_reimbursable ? 1 : 0,
+      description || null,
+      notes || null,
+      createdBy || null,
+      filePath || null,
+      fileName || null,
+      // Autorizaciones
+      admin_director_approved ? 1 : 0,
+      upstream_director_approved ? 1 : 0,
+      hr_director_approved ? 1 : 0,
+      finance_director_approved ? 1 : 0,
+      general_director_approved ? 1 : 0,
+      // Registro Contable
+      accounting_municipality || null,
+      accounting_registration_date || null,
+      accounting_document_type || null,
+      accounting_document_number || null,
+      accounting_dian_number || null,
+      accounting_observations || null,
+      accounting_registered_by || null,
+      // Análisis Contable
+      analyst_good_seal_approved ? 1 : 0,
+      analyst_review_date || null,
+      analyst_xml_file_path || null,
+      analyst_xml_file_name || null,
+      analyst_observations || null,
+      analyst_reviewed_by || null,
+      // Control de Pago
+      payment_date || null,
+      payment_receipt_file_path || null,
+      payment_receipt_file_name || null,
+      (payment_amount !== undefined && payment_amount !== null && payment_amount !== '') ? parseFloat(payment_amount) : 0,
+      payment_observations || null,
+      payment_processed_by || null
+    ];
+
     await db.query(
       `INSERT INTO invoices 
        (id, invoice_number, invoice_type_id, provider_id, cost_center_id, 
-        employee_id, issue_date, due_date, subtotal, tax, discount, total,
-        description, notes, created_by, file_path, file_name, status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [id, invoiceNumber, invoiceTypeId, providerId, costCenterId, employeeId,
-       issueDate, dueDate, subtotal, tax || 0, discount || 0, total,
-       description, notes, createdBy, filePath, fileName]
+        employee_id, order_number, issue_date, due_date, subtotal, tax, discount, total,
+        is_reimbursable, description, notes, created_by, file_path, file_name,
+        admin_director_approved, upstream_director_approved, hr_director_approved,
+        finance_director_approved, general_director_approved,
+        accounting_municipality, accounting_registration_date, accounting_document_type,
+        accounting_document_number, accounting_dian_number, accounting_observations,
+        accounting_registered_by,
+        analyst_good_seal_approved, analyst_review_date, analyst_xml_file_path,
+        analyst_xml_file_name, analyst_observations, analyst_reviewed_by,
+        payment_date, payment_receipt_file_path, payment_receipt_file_name,
+        payment_amount, payment_observations, payment_processed_by, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      values
     );
 
     return this.findById(id);
@@ -127,9 +205,29 @@ class InvoiceModel {
     const values = [];
 
     Object.keys(data).forEach(key => {
-      const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+      // Si la clave ya está en snake_case, usarla tal cual
+      // Si está en camelCase, convertir a snake_case
+      let snakeKey = key;
+      if (key.includes('_')) {
+        snakeKey = key;
+      } else {
+        snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+      }
+      
+      let value = data[key];
+      
+      // Convertir string "null" a null
+      if (value === 'null' || value === '') {
+        value = null;
+      }
+      
+      // Convertir strings numéricos a números
+      if (typeof value === 'string' && !isNaN(value) && value.trim() !== '') {
+        value = parseFloat(value);
+      }
+      
       fields.push(`${snakeKey} = ?`);
-      values.push(data[key]);
+      values.push(value);
     });
 
     if (fields.length === 0) return this.findById(id);
@@ -144,18 +242,57 @@ class InvoiceModel {
   }
 
   static async updateStatus(id, status, userId, reason = null) {
+    // Validar transiciones de estado permitidas
+    const validStatuses = {
+      'pending': 'Pendiente',
+      'filed': 'Radicado',
+      'accounted': 'Contabilizado',
+      'paid': 'Pagado',
+      'cancelled': 'Cancelado'
+    };
+
+    if (!validStatuses[status]) {
+      throw new Error(`Estado no válido: ${status}`);
+    }
+
+    const invoice = await this.findById(id);
+    if (!invoice) {
+      throw new Error('Factura no encontrada');
+    }
+
+    // Validar transiciones permitidas
+    const allowedTransitions = {
+      'pending': ['filed', 'cancelled'],
+      'filed': ['accounted', 'cancelled'],
+      'accounted': ['paid', 'cancelled'],
+      'paid': []  // El estado pagado es final
+    };
+
+    // Validar que el estado actual tenga la transición permitida
+    const currentStatus = invoice.status;
+    if (!allowedTransitions[currentStatus] || !allowedTransitions[currentStatus].includes(status)) {
+      throw new Error(`No se puede cambiar de ${currentStatus} a ${status}`);
+    }
+
     const updates = {
       status,
-      approved_by: userId,
-      approved_at: new Date()
+      updated_at: new Date()
     };
+
+    // Registrar la transición de estado
+    if (status === 'filed') {
+      updates.filed_at = new Date();
+      updates.filed_by = userId;
+    } else if (status === 'accounted') {
+      updates.accounted_at = new Date();
+      updates.accounted_by = userId;
+    } else if (status === 'paid') {
+      updates.paid_at = new Date();
+      updates.paid_by = userId;
+    }
 
     if (reason) {
       updates.rejection_reason = reason;
-    }
-
-    if (status === 'paid') {
-      updates.payment_date = new Date();
     }
 
     const fields = Object.keys(updates).map(k => `${k} = ?`);

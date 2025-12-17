@@ -47,7 +47,7 @@
               <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
               <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Teléfono</th>
               <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Posición</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Centro de Costo</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Departamento</th>
               <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Estado</th>
               <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
             </tr>
@@ -61,11 +61,16 @@
               <td class="px-6 py-4 text-sm text-gray-900">{{ employee.email }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ employee.phone || '-' }}</td>
               <td class="px-6 py-4 text-sm text-gray-900">{{ employee.position || '-' }}</td>
-              <td class="px-6 py-4 text-sm text-gray-900">{{ employee.cost_center_name || '-' }}</td>
+              <td class="px-6 py-4 text-sm text-gray-900">{{ employee.department || '-' }}</td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="employee.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" 
+                <span :class="{
+                  'bg-green-100 text-green-800': employee.status === 'active',
+                  'bg-red-100 text-red-800': employee.status === 'inactive',
+                  'bg-yellow-100 text-yellow-800': employee.status === 'vacation',
+                  'bg-gray-100 text-gray-800': employee.status === 'suspended'
+                }" 
                       class="px-3 py-1 text-xs font-semibold rounded-full">
-                  {{ employee.is_active ? 'Activo' : 'Inactivo' }}
+                  {{ employee.status === 'active' ? 'Activo' : employee.status === 'inactive' ? 'Inactivo' : employee.status === 'vacation' ? 'Vacaciones' : 'Suspendido' }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
@@ -146,28 +151,17 @@
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Centro de Costo</label>
-              <select v-model="form.costCenterId" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                <option value="">Seleccionar centro</option>
-                <option v-for="cc in costCenters" :key="cc.id" :value="cc.id">{{ cc.name }}</option>
-              </select>
-            </div>
-
-            <div>
               <label class="block text-sm font-semibold text-gray-700 mb-2">Fecha de Contratación</label>
               <input v-model="form.hireDate" type="date" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Salario</label>
-              <input v-model.number="form.salary" type="number" step="0.01" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-            </div>
-
-            <div>
               <label class="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
-              <select v-model="form.isActive" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                <option :value="true">Activo</option>
-                <option :value="false">Inactivo</option>
+              <select v-model="form.status" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                <option value="active">Activo</option>
+                <option value="inactive">Inactivo</option>
+                <option value="vacation">Vacaciones</option>
+                <option value="suspended">Suspendido</option>
               </select>
             </div>
 
@@ -196,7 +190,6 @@ import { ref, onMounted } from 'vue'
 import api from '../services/api'
 
 const employees = ref([])
-const costCenters = ref([])
 const loading = ref(false)
 const showModal = ref(false)
 const editingEmployee = ref(null)
@@ -211,10 +204,8 @@ const form = ref({
   identificationNumber: '',
   position: '',
   department: '',
-  costCenterId: '',
   hireDate: '',
-  salary: 0,
-  isActive: true,
+  status: 'active',
   notes: ''
 })
 
@@ -228,10 +219,8 @@ const resetForm = () => {
     identificationNumber: '',
     position: '',
     department: '',
-    costCenterId: '',
     hireDate: '',
-    salary: 0,
-    isActive: true,
+    status: 'active',
     notes: ''
   }
 }
@@ -252,20 +241,46 @@ const loadEmployees = async () => {
   }
 }
 
-const loadCostCenters = async () => {
-  try {
-    const { data } = await api.getCostCenters({ limit: 100 })
-    costCenters.value = data.centers || []
-  } catch (error) {
-    console.error('Error cargando centros de costo:', error)
+const convertSnakeToCamel = (obj) => {
+  // Mapeo explícito de campos snake_case a camelCase
+  const fieldMap = {
+    first_name: 'firstName',
+    last_name: 'lastName',
+    email: 'email',
+    phone: 'phone',
+    identification_type: 'identificationType',
+    identification_number: 'identificationNumber',
+    position: 'position',
+    department: 'department',
+    hire_date: 'hireDate',
+    status: 'status',
+    notes: 'notes'
   }
+  
+  const camelObj = {}
+  Object.keys(fieldMap).forEach(snakeKey => {
+    const camelKey = fieldMap[snakeKey]
+    if (obj[snakeKey] !== undefined) {
+      camelObj[camelKey] = obj[snakeKey]
+    }
+  })
+  return camelObj
 }
 
-const openModal = (employee = null) => {
+const openModal = async (employee = null) => {
   resetForm()
   if (employee) {
     editingEmployee.value = employee
-    form.value = { ...employee }
+    // Cargar los datos completos del empleado desde el backend
+    try {
+      const { data } = await api.getEmployee(employee.id)
+      // Convertir snake_case a camelCase para el formulario
+      form.value = convertSnakeToCamel(data.employee)
+    } catch (error) {
+      console.error('Error cargando datos del empleado:', error)
+      // Si falla, usa los datos de la tabla (con conversión)
+      form.value = convertSnakeToCamel(employee)
+    }
   } else {
     editingEmployee.value = null
   }
@@ -278,13 +293,28 @@ const closeModal = () => {
   resetForm()
 }
 
+const formatDateForDB = (dateValue) => {
+  if (!dateValue) return null
+  // Si es una fecha ISO, convertir a YYYY-MM-DD
+  if (typeof dateValue === 'string' && dateValue.includes('T')) {
+    return dateValue.split('T')[0]
+  }
+  return dateValue
+}
+
 const saveEmployee = async () => {
   try {
+    // Preparar datos con fechas formateadas
+    const dataToSave = {
+      ...form.value,
+      hireDate: formatDateForDB(form.value.hireDate)
+    }
+
     if (editingEmployee.value) {
-      await api.updateEmployee(editingEmployee.value.id, form.value)
+      await api.updateEmployee(editingEmployee.value.id, dataToSave)
       alert('Empleado actualizado correctamente')
     } else {
-      await api.createEmployee(form.value)
+      await api.createEmployee(dataToSave)
       alert('Empleado creado correctamente')
     }
     closeModal()
@@ -310,7 +340,6 @@ const deleteEmployee = async (id) => {
 
 onMounted(() => {
   loadEmployees()
-  loadCostCenters()
 })
 </script>
 

@@ -43,11 +43,14 @@ exports.getEmployeeById = async (req, res) => {
 
 exports.createEmployee = async (req, res) => {
   try {
-    // Filtrar undefined y convertir a valores válidos
+    // Filtrar undefined, '', y null - mantener valores reales incluido 0
     const data = {};
     Object.keys(req.body).forEach(key => {
       const value = req.body[key];
-      data[key] = value === undefined || value === '' ? null : value;
+      // Solo incluir si tiene un valor válido (no undefined, no '', no null)
+      if (value !== undefined && value !== '' && value !== null) {
+        data[key] = value;
+      }
     });
 
     const employee = await EmployeeModel.create(data);
@@ -56,19 +59,26 @@ exports.createEmployee = async (req, res) => {
       employee
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error creando empleado:', error);
     res.status(400).json({ error: error.message });
   }
 };
 
 exports.updateEmployee = async (req, res) => {
   try {
-    // Filtrar undefined y convertir a valores válidos
+    // Filtrar undefined, '', y null - solo enviar campos que tengan valores reales
     const data = {};
     Object.keys(req.body).forEach(key => {
       const value = req.body[key];
-      data[key] = value === undefined || value === '' ? null : value;
+      // Solo incluir si tiene un valor válido (no undefined, no '', no null)
+      if (value !== undefined && value !== '' && value !== null) {
+        data[key] = value;
+      }
     });
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: 'No hay datos para actualizar' });
+    }
 
     const employee = await EmployeeModel.update(req.params.id, data);
     res.json({
@@ -76,6 +86,7 @@ exports.updateEmployee = async (req, res) => {
       employee
     });
   } catch (error) {
+    console.error('Error actualizando empleado:', error);
     res.status(400).json({ error: error.message });
   }
 };

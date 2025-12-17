@@ -51,9 +51,13 @@
               </td>
               <td class="px-6 py-4 text-sm text-gray-600">{{ user.email }}</td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'" 
+                <span :class="{
+                  'bg-red-100 text-red-800': user.role === 'admin',
+                  'bg-blue-100 text-blue-800': user.role === 'user',
+                  'bg-green-100 text-green-800': user.role === 'viewer'
+                }" 
                       class="px-3 py-1 text-xs font-semibold rounded-full">
-                  {{ user.role === 'admin' ? 'Administrador' : 'Usuario' }}
+                  {{ user.role === 'admin' ? 'Administrador' : user.role === 'viewer' ? 'Visualizador' : 'Usuario' }}
                 </span>
               </td>
               <td class="px-6 py-4 text-sm text-gray-600">{{ user.last_login ? new Date(user.last_login).toLocaleDateString('es-CO') : 'Nunca' }}</td>
@@ -95,9 +99,13 @@
 
         <form @submit.prevent="saveUser" class="p-6 space-y-4">
           <div class="grid grid-cols-2 gap-4">
-            <div class="col-span-2">
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Nombre Completo *</label>
-              <input v-model="form.name" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Nombre *</label>
+              <input v-model="form.firstName" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Apellido *</label>
+              <input v-model="form.lastName" type="text" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
             </div>
             <div class="col-span-2">
               <label class="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
@@ -111,6 +119,7 @@
               <label class="block text-sm font-semibold text-gray-700 mb-2">Rol *</label>
               <select v-model="form.role" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                 <option value="user">Usuario</option>
+                <option value="viewer">Visualizador</option>
                 <option value="admin">Administrador</option>
               </select>
             </div>
@@ -148,7 +157,8 @@ const editingUser = ref(null)
 const currentUserId = ref(null)
 
 const form = ref({
-  name: '',
+  firstName: '',
+  lastName: '',
   email: '',
   password: '',
   role: 'user',
@@ -157,7 +167,8 @@ const form = ref({
 
 const resetForm = () => {
   form.value = {
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     role: 'user',
@@ -182,16 +193,34 @@ const loadUsers = async () => {
   }
 }
 
-const openModal = (user = null) => {
+const openModal = async (user = null) => {
   resetForm()
   if (user) {
     editingUser.value = user
-    form.value = {
-      name: user.name,
-      email: user.email,
-      password: '',
-      role: user.role,
-      isActive: user.is_active
+    // Cargar datos completos del usuario desde el backend
+    try {
+      const { data } = await api.getUser(user.id)
+      const userData = data.user || data
+      form.value = {
+        firstName: userData.first_name || '',
+        lastName: userData.last_name || '',
+        email: userData.email || '',
+        password: '',
+        role: userData.role || 'user',
+        isActive: userData.is_active ? true : false
+      }
+    } catch (error) {
+      console.error('Error cargando datos del usuario:', error)
+      // Fallback: usar datos de la tabla con parseo manual
+      const nameParts = (user.name || '').split(' ')
+      form.value = {
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        email: user.email || '',
+        password: '',
+        role: user.role || 'user',
+        isActive: user.is_active ? true : false
+      }
     }
   } else {
     editingUser.value = null
@@ -209,14 +238,28 @@ const saveUser = async () => {
   try {
     if (editingUser.value) {
       // On edit, don't send password if empty
-      const payload = { ...form.value }
-      if (!payload.password) {
-        delete payload.password
+      const payload = {
+        firstName: form.value.firstName,
+        lastName: form.value.lastName,
+        email: form.value.email,
+        role: form.value.role,
+        isActive: form.value.isActive
+      }
+      if (form.value.password) {
+        payload.password = form.value.password
       }
       await api.updateUser(editingUser.value.id, payload)
       alert('Usuario actualizado correctamente')
     } else {
-      await api.createUser(form.value)
+      // Para creación, necesita nombre combinado o los nombres separados
+      const payload = {
+        name: form.value.firstName + ' ' + form.value.lastName,
+        email: form.value.email,
+        password: form.value.password,
+        role: form.value.role,
+        isActive: form.value.isActive
+      }
+      await api.createUser(payload)
       alert('Usuario creado correctamente')
     }
     closeModal()

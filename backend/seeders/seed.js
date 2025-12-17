@@ -220,13 +220,13 @@ async function seed() {
       await db.query(
         `INSERT INTO invoices 
          (id, invoice_number, invoice_type_id, provider_id, cost_center_id, employee_id,
-          issue_date, due_date, subtotal, tax, total, status, description, 
-          created_by, approved_by, payment_date) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          issue_date, due_date, subtotal, tax, discount, total, status, description, 
+          order_number, is_reimbursable, created_by, approved_by, payment_date) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [id, invoice.invoiceNumber, invoice.invoiceTypeId, invoice.providerId, 
          invoice.costCenterId, invoice.employeeId, invoice.issueDate, invoice.dueDate,
-         invoice.subtotal, invoice.tax, invoice.total, invoice.status, invoice.description,
-         invoice.createdBy, invoice.approvedBy || null, invoice.paymentDate || null]
+         invoice.subtotal, invoice.tax, invoice.discount || 0, invoice.total, invoice.status, invoice.description,
+         null, 0, invoice.createdBy, invoice.approvedBy || null, invoice.paymentDate || null]
       );
     }
 

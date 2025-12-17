@@ -80,7 +80,7 @@ export default {
   updateInvoice: (id, formData) => api.put(`/invoices/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  updateInvoiceStatus: (id, data) => api.put(`/invoices/${id}/status`, data),
+  updateInvoiceStatus: (id, data) => api.patch(`/invoices/${id}/status`, data),
   deleteInvoice: (id) => api.delete(`/invoices/${id}`),
   
   // Invoice Types
