@@ -11,6 +11,9 @@ class CostCenterModel {
     const responsibleId = data.responsibleId || data.responsible_id || null;
     const budget = data.budget || 0;
     const isActive = data.isActive !== undefined ? data.isActive : (data.is_active !== undefined ? data.is_active : 1);
+    const clientId = data.clientId || data.client_id || null;
+    const contractNumber = data.contractNumber || data.contract_number || null;
+    const clientNit = data.clientNit || data.client_nit || null;
 
     // Validar campos requeridos
     if (!name || !code) {
@@ -29,9 +32,9 @@ class CostCenterModel {
     const id = uuidv4();
     await db.query(
       `INSERT INTO cost_centers 
-       (id, code, name, description, responsible_id, budget, is_active) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, code, name, description, responsibleId, budget, isActive ? 1 : 0]
+       (id, code, name, description, responsible_id, budget, is_active, client_id, contract_number, client_nit) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, code, name, description, responsibleId, budget, isActive ? 1 : 0, clientId, contractNumber, clientNit]
     );
 
     return this.findById(id);

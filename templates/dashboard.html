@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Modern Invoice Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#3b82f6", // Modern Blue
+              "primary-dark": "#2563eb",
+              "background-light": "#f3f4f6", // Gray 100
+              "background-dark": "#0f172a", // Slate 900
+              "surface-light": "#ffffff",
+              "surface-dark": "#1e293b", // Slate 800
+              "text-main-light": "#111827", // Gray 900
+              "text-main-dark": "#f8fafc", // Slate 50
+              "text-sub-light": "#6b7280", // Gray 500
+              "text-sub-dark": "#94a3b8", // Slate 400
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              'xl': "0.75rem",
+              '2xl': "1rem",
+            },
+          },
+        },
+      };
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569; 
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark transition-colors duration-200 min-h-screen flex flex-col">
+<nav class="sticky top-0 z-50 bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between h-16">
+<div class="flex">
+<div class="flex-shrink-0 flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white">
+<span class="material-icons-round text-xl">description</span>
+</div>
+<span class="font-bold text-lg tracking-tight text-gray-900 dark:text-white">Facturas</span>
+</div>
+<div class="hidden md:ml-8 md:flex md:space-x-4 items-center">
+<a class="text-text-sub-light dark:text-text-sub-dark hover:text-primary dark:hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="bg-primary/10 text-primary px-3 py-2 rounded-md text-sm font-medium" href="#">Facturas</a>
+<a class="text-text-sub-light dark:text-text-sub-dark hover:text-primary dark:hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors" href="#">Proveedores</a>
+<a class="text-text-sub-light dark:text-text-sub-dark hover:text-primary dark:hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors" href="#">Empleados</a>
+<a class="text-text-sub-light dark:text-text-sub-dark hover:text-primary dark:hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors" href="#">Centros de Costo</a>
+<a class="text-text-sub-light dark:text-text-sub-dark hover:text-primary dark:hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors" href="#">Usuarios</a>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<button class="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-icons-round text-xl dark:hidden">dark_mode</span>
+<span class="material-icons-round text-xl hidden dark:block">light_mode</span>
+</button>
+<div class="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-medium text-gray-900 dark:text-white">Admin Sistema</p>
+<p class="text-xs text-gray-500 dark:text-gray-400">admin@empresa.com</p>
+</div>
+<div class="relative group">
+<button class="flex items-center max-w-xs bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+<span class="h-9 w-9 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-sm">AS</span>
+</button>
+</div>
+<a class="ml-2 text-gray-400 hover:text-red-500 transition-colors" href="#" title="Cerrar Sesión">
+<span class="material-icons-round">logout</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</nav>
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="md:flex md:items-center md:justify-between mb-8">
+<div class="min-w-0 flex-1">
+<h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:truncate sm:text-3xl sm:tracking-tight">
+                    Facturas
+                </h2>
+<p class="mt-1 text-sm text-text-sub-light dark:text-text-sub-dark">
+                    Gestión de facturas y documentos contables.
+                </p>
+</div>
+<div class="mt-4 flex md:ml-4 md:mt-0">
+<button class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all shadow-primary/30" type="button">
+<span class="material-icons-round mr-2 -ml-1 text-lg">add</span>
+                    Nueva Factura
+                </button>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-6">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+<div class="md:col-span-4">
+<label class="sr-only" for="search">Buscar</label>
+<div class="relative rounded-md shadow-sm">
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+<span class="material-icons-round text-gray-400 text-lg">search</span>
+</div>
+<input class="block w-full rounded-lg border-gray-300 dark:border-gray-600 pl-10 focus:border-primary focus:ring-primary sm:text-sm py-2.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-400" id="search" name="search" placeholder="Buscar por número o descripción..." type="text"/>
+</div>
+</div>
+<div class="md:col-span-3">
+<div class="relative">
+<select class="block w-full rounded-lg border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary sm:text-sm py-2.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white appearance-none pl-3 pr-10">
+<option>Todos los estados</option>
+<option>Radicado</option>
+<option>Contabilizado</option>
+<option>Pagado</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+<span class="material-icons-round text-lg">expand_more</span>
+</div>
+</div>
+</div>
+<div class="md:col-span-3">
+<div class="relative">
+<select class="block w-full rounded-lg border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary sm:text-sm py-2.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white appearance-none pl-3 pr-10">
+<option>Todos los proveedores</option>
+<option>Papelería Ltda</option>
+<option>Servicios Generales</option>
+<option>Transportes Express</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+<span class="material-icons-round text-lg">expand_more</span>
+</div>
+</div>
+</div>
+<div class="md:col-span-2">
+<div class="relative rounded-md shadow-sm">
+<input class="block w-full rounded-lg border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary sm:text-sm py-2.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-400 text-center" type="date"/>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark shadow-sm rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700">
+<div class="overflow-x-auto">
+<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+<thead class="bg-gray-50 dark:bg-slate-800/50">
+<tr>
+<th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Número</th>
+<th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Proveedor</th>
+<th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Monto</th>
+<th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Fecha</th>
+<th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Estado</th>
+<th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-surface-light dark:bg-surface-dark">
+<tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center">
+<div class="h-8 w-8 rounded bg-blue-50 dark:bg-blue-900/30 text-primary flex items-center justify-center mr-3">
+<span class="material-icons-round text-base">receipt</span>
+</div>
+<span class="text-sm font-semibold text-gray-900 dark:text-white">FV-1179</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm font-medium text-gray-900 dark:text-white">Papelería Ltda</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">NIT: 900123456-1</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm font-bold text-gray-900 dark:text-white">$7.140.000</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm text-gray-500 dark:text-gray-400">14/12/2025</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                                    Radicado
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+<div class="flex items-center justify-end space-x-3">
+<a class="text-primary hover:text-indigo-900 dark:hover:text-indigo-400 font-semibold text-xs uppercase tracking-wide" href="#">Ver</a>
+<span class="text-gray-300 dark:text-gray-600">|</span>
+<a class="text-red-500 hover:text-red-700 font-semibold text-xs uppercase tracking-wide" href="#">Eliminar</a>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center">
+<div class="h-8 w-8 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mr-3">
+<span class="material-icons-round text-base">inventory</span>
+</div>
+<span class="text-sm font-semibold text-gray-900 dark:text-white">T11519</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm font-medium text-gray-900 dark:text-white">Servicios Generales S.A.S</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">NIT: 900234567-2</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm font-bold text-gray-900 dark:text-white">$2.491.559</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm text-gray-500 dark:text-gray-400">14/12/2025</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200">
+                                    Contabilizado
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+<div class="flex items-center justify-end space-x-3">
+<a class="text-primary hover:text-indigo-900 dark:hover:text-indigo-400 font-semibold text-xs uppercase tracking-wide" href="#">Ver</a>
+<span class="text-gray-300 dark:text-gray-600">|</span>
+<a class="text-red-500 hover:text-red-700 font-semibold text-xs uppercase tracking-wide" href="#">Eliminar</a>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center">
+<div class="h-8 w-8 rounded bg-blue-50 dark:bg-blue-900/30 text-primary flex items-center justify-center mr-3">
+<span class="material-icons-round text-base">receipt</span>
+</div>
+<div>
+<span class="block text-sm font-semibold text-gray-900 dark:text-white">T11517</span>
+<span class="block text-[10px] text-gray-400 uppercase">Orden 6924</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm font-medium text-gray-900 dark:text-white">Papelería Ltda</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">NIT: 900123456-1</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm font-bold text-gray-900 dark:text-white">$1.869.117</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm text-gray-500 dark:text-gray-400">14/12/2025</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                                    Radicado
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+<div class="flex items-center justify-end space-x-3">
+<a class="text-primary hover:text-indigo-900 dark:hover:text-indigo-400 font-semibold text-xs uppercase tracking-wide" href="#">Ver</a>
+<span class="text-gray-300 dark:text-gray-600">|</span>
+<a class="text-red-500 hover:text-red-700 font-semibold text-xs uppercase tracking-wide" href="#">Eliminar</a>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center">
+<div class="h-8 w-8 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mr-3">
+<span class="material-icons-round text-base">electric_bolt</span>
+</div>
+<div>
+<span class="block text-sm font-semibold text-gray-900 dark:text-white">SP-2025-001</span>
+<span class="block text-[10px] text-gray-400">Servicio Energía</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm font-medium text-gray-900 dark:text-white">Transportes Express</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">NIT: 900567890-5</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm font-bold text-gray-900 dark:text-white">$238.000</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm text-gray-500 dark:text-gray-400">24/1/2025</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
+                                    Pagado
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+<div class="flex items-center justify-end space-x-3">
+<a class="text-primary hover:text-indigo-900 dark:hover:text-indigo-400 font-semibold text-xs uppercase tracking-wide" href="#">Ver</a>
+<span class="text-gray-300 dark:text-gray-600">|</span>
+<a class="text-red-500 hover:text-red-700 font-semibold text-xs uppercase tracking-wide" href="#">Eliminar</a>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="bg-gray-50 dark:bg-slate-800/50 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
+<div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+<div>
+<p class="text-sm text-gray-700 dark:text-gray-400">
+                            Mostrando <span class="font-medium">1</span> a <span class="font-medium">4</span> de <span class="font-medium">12</span> resultados
+                        </p>
+</div>
+<div>
+<nav aria-label="Pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+<a class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 text-sm font-medium text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700" href="#">
+<span class="sr-only">Previous</span>
+<span class="material-icons-round text-sm">chevron_left</span>
+</a>
+<a aria-current="page" class="z-10 bg-primary/10 border-primary text-primary relative inline-flex items-center px-4 py-2 border text-sm font-medium" href="#">
+                                1
+                            </a>
+<a class="bg-white dark:bg-slate-800 border-gray-300 dark:border-gray-600 text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700 relative inline-flex items-center px-4 py-2 border text-sm font-medium" href="#">
+                                2
+                            </a>
+<a class="bg-white dark:bg-slate-800 border-gray-300 dark:border-gray-600 text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700 relative inline-flex items-center px-4 py-2 border text-sm font-medium" href="#">
+                                3
+                            </a>
+<a class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 text-sm font-medium text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700" href="#">
+<span class="sr-only">Next</span>
+<span class="material-icons-round text-sm">chevron_right</span>
+</a>
+</nav>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

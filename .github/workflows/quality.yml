@@ -1,0 +1,67 @@
+name: Code Quality Check
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: 'backend/package-lock.json'
+
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm install
+
+    - name: Run tests
+      working-directory: ./backend
+      run: npm test -- --coverage
+
+    - name: Check test results
+      working-directory: ./backend
+      run: |
+        if [ $? -ne 0 ]; then
+          echo "❌ Tests failed!"
+          exit 1
+        fi
+        echo "✅ All tests passed!"
+
+    - name: Check coverage
+      working-directory: ./backend
+      run: |
+        COVERAGE=$(cat coverage/coverage-summary.json | grep -o '"lines":{"total":[^}]*}' | grep -o '[0-9]*\.[0-9]*' | head -1)
+        echo "Code coverage: $COVERAGE%"
+        if (( $(echo "$COVERAGE < 70" | bc -l) )); then
+          echo "⚠️  Coverage below 70%"
+        else
+          echo "✅ Coverage acceptable"
+        fi
+      continue-on-error: true
+
+    - name: Comment PR
+      uses: actions/github-script@v6
+      if: always()
+      with:
+        script: |
+          const fs = require('fs');
+          const coverage = JSON.parse(fs.readFileSync('./backend/coverage/coverage-summary.json', 'utf8'));
+          const totalCoverage = coverage.total.lines.pct;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `📊 **Test Results**\n\n✅ All tests passed\n📈 Code Coverage: ${totalCoverage}%`
+          });

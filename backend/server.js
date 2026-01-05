@@ -33,6 +33,7 @@ const costCenterRoutes = require('./routes/costCenter.routes');
 const invoiceRoutes = require('./routes/invoice.routes');
 const invoiceTypeRoutes = require('./routes/invoiceType.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const budgetRoutes = require('./routes/budget.routes');
 
 // --- Logs de debug ---
 console.log("authRoutes:", authRoutes);
@@ -53,6 +54,7 @@ app.use('/api/cost-centers', costCenterRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/invoice-types', invoiceTypeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/budget', budgetRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -76,7 +78,8 @@ app.get('/', (req, res) => {
       costCenters: '/api/cost-centers',
       invoices: '/api/invoices',
       invoiceTypes: '/api/invoice-types',
-      dashboard: '/api/dashboard'
+      dashboard: '/api/dashboard',
+      budget: '/api/budget'
     }
   });
 });
