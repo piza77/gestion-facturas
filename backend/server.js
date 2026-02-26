@@ -35,16 +35,6 @@ const invoiceTypeRoutes = require('./routes/invoiceType.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const budgetRoutes = require('./routes/budget.routes');
 
-// --- Logs de debug ---
-console.log("authRoutes:", authRoutes);
-console.log("userRoutes:", userRoutes);
-console.log("employeeRoutes:", employeeRoutes);
-console.log("providerRoutes:", providerRoutes);
-console.log("costCenterRoutes:", costCenterRoutes);
-console.log("invoiceRoutes:", invoiceRoutes);
-console.log("invoiceTypeRoutes:", invoiceTypeRoutes);
-console.log("dashboardRoutes:", dashboardRoutes);
-
 // Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

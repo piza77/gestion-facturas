@@ -47,6 +47,58 @@ class BudgetCategoryModel {
     return categories[0] || null;
   }
 
+  // Nuevo método para agregar gasto ejecutado
+  static async addExpense(categoryId, expenseAmount, description = null) {
+    const category = await this.findById(categoryId);
+    if (!category) {
+      throw new Error('Categoría de presupuesto no encontrada');
+    }
+
+    const newExecutedAmount = (category.executed_amount || 0) + parseFloat(expenseAmount);
+    
+    await db.query(
+      `UPDATE budget_categories 
+       SET executed_amount = ?, updated_at = NOW() 
+       WHERE id = ?`,
+      [newExecutedAmount, categoryId]
+    );
+
+    // Registrar el movimiento en un log de gastos
+    await db.query(
+      `INSERT INTO budget_expenses 
+       (id, category_id, amount, description, created_at) 
+       VALUES (?, ?, ?, ?, NOW())`,
+      [uuidv4(), categoryId, expenseAmount, description]
+    );
+
+    return this.findById(categoryId);
+  }
+
+  // Obtener estadísticas de ejecución
+  static async getExecutionStats(costCenterId) {
+    const stats = await db.query(
+      `SELECT 
+         SUM(amount) as total_budget,
+         SUM(executed_amount) as total_executed,
+         SUM(amount - executed_amount) as total_remaining,
+         COUNT(*) as categories_count
+       FROM budget_categories 
+       WHERE cost_center_id = ?`,
+      [costCenterId]
+    );
+
+    const categories = await this.findByCostCenter(costCenterId);
+    
+    return {
+      summary: stats[0] || {},
+      categories: categories.map(cat => ({
+        ...cat,
+        remaining_amount: (cat.amount || 0) - (cat.executed_amount || 0),
+        execution_percentage: cat.amount > 0 ? ((cat.executed_amount || 0) / cat.amount * 100) : 0
+      }))
+    };
+  }
+
   static async findByCostCenter(costCenterId) {
     return await db.query(
       `SELECT * FROM budget_categories 
@@ -132,6 +184,17 @@ class BudgetCategoryModel {
       ...category,
       subcategories
     };
+  }
+
+  // Método para agregar monto ejecutado (para items)
+  static async addExecutedAmount(categoryId, amount) {
+    await db.query(
+      `UPDATE budget_categories 
+       SET executed_amount = executed_amount + ?, 
+           updated_at = NOW() 
+       WHERE id = ?`,
+      [amount, categoryId]
+    );
   }
 
   // Presupuestos predeterminados del sistema

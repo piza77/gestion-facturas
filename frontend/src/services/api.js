@@ -70,6 +70,36 @@ export default {
   updateCostCenter: (id, data) => api.put(`/cost-centers/${id}`, data),
   deleteCostCenter: (id) => api.delete(`/cost-centers/${id}`),
   getCostCenterStats: (id) => api.get(`/cost-centers/${id}/stats`),
+
+  // Budget Management
+  createBudgetCategory: (data) => api.post('/budget/categories', data),
+  getBudgetCategories: (params) => api.get('/budget/categories', { params }),
+  getBudgetCategory: (id) => api.get(`/budget/categories/${id}`),
+  updateBudgetCategory: (id, data) => api.put(`/budget/categories/${id}`, data),
+  deleteBudgetCategory: (id) => api.delete(`/budget/categories/${id}`),
+  createBudgetSubcategory: (data) => api.post('/budget/subcategories', data),
+  getBudgetSubcategories: (params) => api.get('/budget/subcategories', { params }),
+  updateBudgetSubcategory: (id, data) => api.put(`/budget/subcategories/${id}`, data),
+  deleteBudgetSubcategory: (id) => api.delete(`/budget/subcategories/${id}`),
+  getDefaultBudgetTemplate: () => api.get('/budget/template/default'),
+  getBudgetSummary: (params) => api.get('/budget/summary', { params }),
+  assignBudgetFromTemplate: (costCenterId) => api.post(`/budget/assign-template/${costCenterId}`),
+  
+  // Budget Execution & Tracking
+  addBudgetExpense: (categoryId, data) => api.post(`/budget/categories/${categoryId}/expenses`, data),
+  getBudgetExecution: (costCenterId) => api.get(`/budget/execution/${costCenterId}`),
+  getBudgetReport: (costCenterId) => api.get(`/budget/report/${costCenterId}`),
+  sendBudgetNotification: (costCenterId, data) => api.post(`/budget/notification/${costCenterId}`, data),
+  
+  // Budget Items Management
+  createBudgetItem: (data) => api.post('/budget/items', data),
+  getBudgetItems: (categoryId) => api.get(`/budget/items/category/${categoryId}`),
+  getBudgetItem: (itemId) => api.get(`/budget/items/${itemId}`),
+  updateBudgetItem: (itemId, data) => api.put(`/budget/items/${itemId}`, data),
+  deleteBudgetItem: (itemId) => api.delete(`/budget/items/${itemId}`),
+  updateItemStatus: (itemId, status) => api.patch(`/budget/items/${itemId}/status`, { status }),
+  approveItem: (itemId, comments) => api.post(`/budget/items/${itemId}/approve`, { comments }),
+  getItemsSummary: (categoryId) => api.get(`/budget/items-summary/category/${categoryId}`),
   
   // Invoices
   getInvoices: (params) => api.get('/invoices', { params }),

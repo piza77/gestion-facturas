@@ -1,6 +1,7 @@
 const BudgetCategoryModel = require('../models/BudgetCategory');
 const BudgetSubcategoryModel = require('../models/BudgetSubcategory');
 const CostCenterModel = require('../models/CostCenter');
+const BudgetItemModel = require('../models/BudgetItem');
 
 /**
  * CATEGORÍAS DE PRESUPUESTO (RUBROS)
@@ -71,7 +72,160 @@ exports.getBudgetCategories = async (req, res) => {
     res.status(500).json({ error: 'Error al obtener categorías de presupuesto' });
   }
 };
+/**
+ * SEGUIMIENTO DE GASTOS Y EJECUCIÓN
+ */
 
+exports.addExpense = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { amount, description } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ 
+        error: 'El monto del gasto debe ser mayor a 0' 
+      });
+    }
+
+    const category = await BudgetCategoryModel.addExpense(categoryId, amount, description);
+    
+    res.json({
+      message: 'Gasto registrado exitosamente',
+      category
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.getExecutionStats = async (req, res) => {
+  try {
+    const { costCenterId } = req.params;
+
+    const stats = await BudgetCategoryModel.getExecutionStats(costCenterId);
+    
+    res.json({
+      costCenterId,
+      ...stats,
+      message: 'Estadísticas de ejecución obtenidas exitosamente'
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Error al obtener estadísticas de ejecución' });
+  }
+};
+
+exports.getBudgetReport = async (req, res) => {
+  try {
+    const { costCenterId } = req.params;
+
+    // Obtener información del centro de costo
+    const centerResult = await require('../config/database').query(
+      'SELECT * FROM cost_centers WHERE id = ?',
+      [costCenterId]
+    );
+    
+    if (centerResult.length === 0) {
+      return res.status(404).json({ error: 'Centro de costo no encontrado' });
+    }
+
+    const center = centerResult[0];
+    const stats = await BudgetCategoryModel.getExecutionStats(costCenterId);
+    
+    // Crear reporte completo
+    const report = {
+      center: {
+        id: center.id,
+        name: center.name,
+        code: center.code,
+        budget: center.budget,
+        client_id: center.client_id,
+        contract_number: center.contract_number
+      },
+      summary: stats.summary,
+      categories: stats.categories,
+      generated_at: new Date(),
+      period: 'Acumulado'
+    };
+    
+    res.json({
+      message: 'Reporte generado exitosamente',
+      report
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Error al generar reporte' });
+  }
+};
+
+exports.sendBudgetNotification = async (req, res) => {
+  try {
+    const { costCenterId } = req.params;
+    const { recipientEmail, notificationType = 'monthly_report' } = req.body;
+
+    if (!recipientEmail) {
+      return res.status(400).json({ 
+        error: 'El email del destinatario es requerido' 
+      });
+    }
+
+    // Obtener reporte
+    const { report } = await new Promise((resolve, reject) => {
+      req.params.costCenterId = costCenterId;
+      exports.getBudgetReport(req, { 
+        json: (data) => resolve(data)
+      });
+    });
+
+    // Simular envío de email (aquí integrarías con un servicio real como SendGrid, Nodemailer, etc.)
+    const emailSubject = `Reporte de Presupuesto - ${report.center.name}`;
+    const totalBudget = report.summary.total_budget || 0;
+    const totalExecuted = report.summary.total_executed || 0;
+    const totalRemaining = report.summary.total_remaining || 0;
+    const executionPercentage = totalBudget > 0 ? (totalExecuted / totalBudget * 100).toFixed(1) : 0;
+
+    // Crear contenido del email
+    const emailContent = `
+      📊 REPORTE DE PRESUPUESTO
+      
+      Centro de Costo: ${report.center.name} (${report.center.code})
+      Cliente: ${report.center.client_id || 'No especificado'}
+      Contrato: ${report.center.contract_number || 'No especificado'}
+      
+      💰 RESUMEN FINANCIERO:
+      • Presupuesto Total: $${new Intl.NumberFormat('es-CO').format(totalBudget)}
+      • Ejecutado: $${new Intl.NumberFormat('es-CO').format(totalExecuted)} (${executionPercentage}%)
+      • Disponible: $${new Intl.NumberFormat('es-CO').format(totalRemaining)}
+      
+      📋 DESGLOSE POR CATEGORÍAS:
+      ${report.categories.map(cat => 
+        `• ${cat.name}: $${new Intl.NumberFormat('es-CO').format(cat.executed_amount || 0)} / $${new Intl.NumberFormat('es-CO').format(cat.amount)} (${cat.execution_percentage.toFixed(1)}%)`
+      ).join('\n      ')}
+      
+      📅 Generado: ${new Date().toLocaleString('es-CO')}
+    `;
+
+    // Registrar la notificación en la base de datos
+    await require('../config/database').query(
+      `INSERT INTO budget_notifications 
+       (id, cost_center_id, notification_type, recipient_email, subject, status) 
+       VALUES (?, ?, ?, ?, ?, 'sent')`,
+      [require('uuid').v4(), costCenterId, notificationType, recipientEmail, emailSubject]
+    );
+
+    res.json({
+      message: 'Notificación enviada exitosamente',
+      recipient: recipientEmail,
+      subject: emailSubject,
+      content: emailContent,
+      report
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Error al enviar notificación' });
+  }
+};
 exports.getBudgetCategoryById = async (req, res) => {
   try {
     const category = await BudgetCategoryModel.getWithSubcategories(req.params.id);
@@ -355,6 +509,177 @@ exports.assignBudgetFromTemplate = async (req, res) => {
       categories: createdCategories,
       total: totalBudget
     });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+/**
+ * ITEMS DE CATEGORÍAS DE PRESUPUESTO
+ * Elementos específicos dentro de cada categoría
+ */
+
+exports.createBudgetItem = async (req, res) => {
+  try {
+    const { categoryId, name, amount, description, itemType } = req.body;
+    const userId = req.user?.id;
+
+    if (!categoryId || !name || !amount) {
+      return res.status(400).json({ 
+        error: 'La categoría, nombre y monto son requeridos' 
+      });
+    }
+
+    // Crear el item
+    const item = await BudgetItemModel.create({
+      categoryId,
+      name,
+      amount: parseFloat(amount),
+      description,
+      itemType,
+      createdBy: userId
+    });
+
+    // Actualizar executed_amount en la categoría
+    await BudgetCategoryModel.addExecutedAmount(categoryId, parseFloat(amount));
+
+    res.status(201).json({
+      message: 'Item de presupuesto creado exitosamente',
+      item
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.getBudgetItems = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+
+    if (!categoryId) {
+      return res.status(400).json({ 
+        error: 'El ID de la categoría es requerido' 
+      });
+    }
+
+    const items = await BudgetItemModel.findByCategory(categoryId);
+    const summary = await BudgetItemModel.getItemsSummary(categoryId);
+
+    res.json({
+      items,
+      summary
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.getItemById = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+
+    const item = await BudgetItemModel.findById(itemId);
+    if (!item) {
+      return res.status(404).json({ error: 'Item no encontrado' });
+    }
+
+    res.json(item);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.updateBudgetItem = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const { name, amount, description, itemType, status } = req.body;
+
+    const item = await BudgetItemModel.update(itemId, {
+      name,
+      amount,
+      description,
+      itemType,
+      status
+    });
+
+    res.json({
+      message: 'Item actualizado exitosamente',
+      item
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.deleteBudgetItem = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+
+    const result = await BudgetItemModel.delete(itemId);
+
+    res.json({
+      message: 'Item eliminado exitosamente',
+      result
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.updateItemStatus = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ 
+        error: 'El estado es requerido' 
+      });
+    }
+
+    const item = await BudgetItemModel.updateStatus(itemId, status);
+
+    res.json({
+      message: 'Estado del item actualizado exitosamente',
+      item
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.approveItem = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const { comments } = req.body;
+    const userId = req.user?.id;
+
+    const item = await BudgetItemModel.approveItem(itemId, userId, comments);
+
+    res.json({
+      message: 'Item aprobado exitosamente',
+      item
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.getItemsSummaryByCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+
+    const summary = await BudgetItemModel.getItemsSummary(categoryId);
+
+    res.json(summary);
   } catch (error) {
     console.error('Error:', error);
     res.status(400).json({ error: error.message });

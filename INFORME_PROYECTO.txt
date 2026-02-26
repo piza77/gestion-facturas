@@ -1,0 +1,741 @@
+================================================================================
+                    INFORME TÉCNICO DEL PROYECTO
+              SISTEMA DE GESTIÓN DE FACTURAS Y PRESUPUESTOS
+================================================================================
+
+Fecha: 22 de febrero de 2026
+Versión: 1.0.0
+Estado: Listo para Producción
+
+================================================================================
+SECCIÓN 1: CONCEPTOS GENERALES DEL PROYECTO
+================================================================================
+
+1.1. DESCRIPCIÓN GENERAL
+
+El proyecto es un sistema integral web de gestión administrativa y financiera 
+diseñado para organizaciones que necesitan controlar facturas, presupuestos, 
+gastos y detalles contables. El sistema centraliza la información de múltiples 
+procesos como facturación, autorización de gastos, registro contable y control 
+de pagos.
+
+1.2. PROPÓSITO PRINCIPAL
+
+Automatizar y centralizar los procesos de:
+  • Gestión de facturas de proveedores
+  • Distribución y control de presupuestos por centros de costo
+  • Seguimiento de gastos y presupuesto disponible
+  • Autorización multinivel de documentos financieros
+  • Registro contable y análisis fiscal
+  • Control y seguimiento de pagos
+
+1.3. USUARIOS OBJETIVO
+
+  • Gerentes y supervisores de centros de costos
+  • Personal de Finanzas y Contabilidad
+  • Directores de diferentes áreas (Recursos Humanos, Administrativo)
+  • Analistas fiscales y contables
+  • Administradores del sistema
+
+1.4. ALCANCE GEOGRÁFICO Y OPERATIVO
+
+  • Soporte multiusuario simultáneo
+  • Manejo de múltiples centros de costo
+  • Información de clientes (empresa o persona natural)
+  • Datos contables incluyendo DIAN (Colombia)
+  • Moneda: Configurable (por defecto en pesos colombianos)
+
+1.5. MODELO DE DATOS JERÁRQUICO
+
+La aplicación utiliza una estructura de datos en 4 niveles:
+
+  Nivel 1: Centro de Costo (Proyecto/Departamento)
+    └── Presupuesto Total Asignado
+    
+  Nivel 2: Categorías de Presupuesto (Rubros)
+    └── Recursos Humanos, Logística, Marketing, etc.
+    └── Distribución porcentual del presupuesto
+    
+  Nivel 3: Items Detallados
+    └── Compras, Contrataciones, Servicios
+    └── Montos individuales y descripción
+    └── Estados: Pendiente → Aprobado → Ejecutado
+    
+  Nivel 4: Seguimiento y Ejecución
+    └── Gastos reales vs presupuestado
+    └── Alertas automáticas
+    └── Reportes detallados
+
+
+================================================================================
+SECCIÓN 2: DESCRIPCIÓN DE MÓDULOS Y COMPONENTES
+================================================================================
+
+2.1. MÓDULO DE AUTENTICACIÓN Y CONTROL DE ACCESO
+
+Concepto: Gestiona el acceso seguro de usuarios al sistema mediante 
+credenciales y sesiones.
+
+Componentes Técnicos:
+  • modelo: User.js
+  • controlador: auth.controller.js
+  • middleware: auth.js
+  • rutas: auth.routes.js
+
+Características:
+  • Registro de usuarios con encriptación bcrypt (10 rondas)
+  • Autenticación con JWT (JSON Web Tokens)
+  • Gestión de roles: admin, manager, user, analyst
+  • Validación de permisos por rol
+  • Tokens con expiración configurable
+  • Registro de último login de usuarios
+
+Flujo de Seguridad:
+  1. Usuario proporciona email y contraseña
+  2. Contraseña se valida contra hash almacenado
+  3. Se genera JWT firmado con clave secreta
+  4. Cliente envía JWT en cada solicitud (Bearer Token)
+  5. Middleware valida JWT en rutas protegidas
+  6. Se verifica que usuario tenga rol requerido
+
+
+2.2. MÓDULO DE GESTIÓN DE USUARIOS
+
+Concepto: Administra la creación, modificación y eliminación de usuarios 
+del sistema.
+
+Componentes Técnicos:
+  • modelo: User.js
+  • controlador: user.controller.js
+  • rutas: user.routes.js
+
+Características:
+  • Crear usuarios con validación de email único
+  • Asignar roles y permisos
+  • Activar/desactivar usuarios
+  • Búsqueda y filtrado de usuarios
+  • Cambio de contraseña
+  • Auditoría de cambios (created_at, updated_at)
+
+Estructura de Usuario:
+  - ID (UUID)
+  - Nombre (first_name, last_name)
+  - Email (único)
+  - Contraseña (hasheada)
+  - Rol (admin, manager, user, analyst)
+  - Estado activo/inactivo
+  - Timestamps de auditoría
+
+
+2.3. MÓDULO DE GESTIÓN DE FACTURAS
+
+Concepto: Core del sistema. Maneja la captura, validación y ciclo 
+completo de facturas de proveedores.
+
+Componentes Técnicos:
+  • modelo: Invoice.js
+  • controlador: invoice.controller.js
+  • rutas: invoice.routes.js
+  • tipos: InvoiceType.js
+
+Características Principales:
+  • Número de factura único por proveedor
+  • Cálculo automático de impuestos (IVA configurablle)
+  • Descuentos por línea o total
+  • Clasificación de facturas reembolsables vs operacionales
+  • Adjuntos de archivos PDF/XML
+
+Ciclo de Vida Completo de la Factura:
+
+  CAPTURA INICIAL:
+    - Número de factura
+    - Proveedor y tipo de factura
+    - Centro de costo asignado
+    - Empleado responsable
+    - Fecha de emisión y vencimiento
+    - Montos: Subtotal, Impuestos, Descuentos, Total
+    - Descripción y observaciones
+
+  AUTORIZACIONES (Sistema de Aprobación Multinivel):
+    - Aprobación Directa Administrativa
+    - Aprobación Directa Upstream (Autoridades)
+    - Aprobación Directa RRHH
+    - Aprobación Directa Finanzas
+    - Aprobación Directa General
+    [Cada uno: SI/NO con usuario y fecha]
+
+  REGISTRO CONTABLE:
+    - Municipio de registro
+    - Tipo de documento (Factura, Nota Crédito, etc.)
+    - Número de documento asignado
+    - DIAN (Servicio de Impuestos Colombianos)
+    - Observaciones contables
+    - Usuario registrador
+
+  ANÁLISIS CONTABLE/FISCAL:
+    - Validación de sellado correcto
+    - Fecha de revisión
+    - Archivo XML adjunto
+    - Observaciones técnicas
+    - Usuario revisor analista
+
+  CONTROL DE PAGO:
+    - Fecha de pago realizado
+    - Archivo de recibo de pago
+    - Monto pagado (puede diferir del total)
+    - Observaciones de pago
+    - Procesado por
+
+Estados del Documento:
+  - Borrador (en captura)
+  - Capturada (lista para autorización)
+  - En Revisión (esperando aprobaciones)
+  - Aprobada (autorizada, lista para contabilidad)
+  - Registrada (asentada en contabilidad)
+  - Analizada (validada fiscalmente)
+  - Pagada (dinero transferido)
+  - Cancelada (anulada)
+
+Campos Financieros:
+  • Subtotal: Base calcular impuestos
+  • Impuesto (IVA u otros): Calculado automáticamente
+  • Descuento: Puede ser línea o total
+  • Total: Subtotal + Impuesto - Descuento
+  • Monto Pagado: Puede ser parcial o total
+
+
+2.4. MÓDULO DE GESTIÓN DE PRESUPUESTOS
+
+Concepto: Sistema jerárquico para definir, distribuir, ejecutar y 
+monitorear presupuestos por centro de costo.
+
+Componentes Técnicos:
+  • modelos: 
+    - CostCenter.js (Centros de Costo)
+    - BudgetCategory.js (Categorías/Rubros)
+    - BudgetSubcategory.js (Subcategorías)
+    - BudgetItem.js (Items detallados)
+  • controlador: budget.controller.js
+  • rutas: budget.routes.js
+
+Estructura de Centro de Costo:
+  - ID único (UUID)
+  - Nombre descriptivo
+  - Presupuesto Total asignado
+  - Información del Cliente:
+    * Nombre del Cliente
+    * Tipo Cliente (Persona Natural / Jurídica)
+    * Cédula o NIT
+    * Número de Contrato
+
+Categorías Predefinidas (Rubros):
+  - Recursos Humanos (50%)
+  - Logística (20%)
+  - Reembolsables (10%)
+  - Contratos (10%)
+  - Imprevistos (8%)
+  - Otros (2%)
+
+Flujo de Presupuesto:
+
+  PASO 1 - ASIGNACIÓN INICIAL:
+    Centro de Costo: Empresa ABC
+    Presupuesto Total: $5,000,000
+    
+  PASO 2 - DISTRIBUCIÓN POR CATEGORÍA:
+    Recursos Humanos:  $2,500,000 (50%)
+    Logística:         $1,000,000 (20%)
+    Reembolsables:       $500,000 (10%)
+    Contratos:           $500,000 (10%)
+    Imprevistos:         $400,000 (8%)
+    Otros:               $100,000 (2%)
+    
+  PASO 3 - ITEMS DETALLADOS POR CATEGORÍA:
+    Recursos Humanos:
+      - Contratación Gerente:     $600,000 [Pendiente]
+      - Contratación Auxiliares:  $300,000 [Aprobado]
+      - Capacitación:              $70,000 [Ejecutado]
+      - Seguro Médico:             $30,000 [Ejecutado]
+      
+  PASO 4 - SEGUIMIENTO Y CONTROL:
+    Presupuesto Total:    $5,000,000
+    Ejecutado:            $2,150,000 (43%)
+    Disponible:           $2,850,000 (57%)
+    Estado:               En ejecución
+
+Estados de Items Presupuestarios:
+  - Pendiente: Aún no se ha gestionado
+  - Aprobado: Autorizado para ejecutar
+  - Ejecutado: Ya se realizó el gasto
+  - Cancelado: Item descartado
+
+
+2.5. MÓDULO DE PROVEEDORES
+
+Concepto: Almacen y gestiona información de proveedores terceros.
+
+Componentes Técnicos:
+  • modelo: Provider.js
+  • controlador: provider.controller.js
+  • rutas: provider.routes.js
+
+Características:
+  • Registro de proveedores con datos tributarios
+  • Clasificación por tipo de servicio
+  • Información de contacto
+  • NIT/Cédula único
+  • Datos bancarios para pagos
+  • Historial de transacciones
+
+
+2.6. MÓDULO DE EMPLEADOS
+
+Concepto: Gestiona información del personal de la organización.
+
+Componentes Técnicos:
+  • modelo: Employee.js
+  • controlador: employee.controller.js
+  • rutas: employee.routes.js
+
+Características:
+  • Registro de empleados con datos personales
+  • Asignación a centros de costo
+  • Posición/Cargo
+  • Estado laboral (Activo/Inactivo)
+  • Información de contacto
+
+
+2.7. MÓDULO DE DASHBOARD Y REPORTES
+
+Concepto: Visualización de indicadores clave e información agregada 
+del sistema.
+
+Componentes Técnicos:
+  • controlador: dashboard.controller.js
+  • rutas: dashboard.routes.js
+
+Visualizaciones Principales:
+  • Facturas por estado (gráfico de pastel)
+  • Gastos por categoría presupuestaria
+  • Ejecución presupuestaria general
+  • Facturas próximas a vencer
+  • Top 10 facturas mayores
+  • Resumen de proveedores
+  • Comparativo mes a mes
+
+Métricas de Negocio:
+  • Total facturado (mes, trimestre, año)
+  • Promedio de factura
+  • Cantidad de proveedores activos
+  • Porcentaje de facturas demoradas
+  • Ejecución presupuestaria por centro
+
+
+2.8. MÓDULO DE TIPOS DE FACTURA
+
+Concepto: Define las clasificaciones de documentos que el sistema 
+puede procesar.
+
+Componentes Técnicos:
+  • modelo: InvoiceType.js
+  • controlador: (incrustado en invoice)
+  • rutas: invoiceType.routes.js
+
+Tipos Soportados:
+  • Factura Estándar
+  • Nota Crédito
+  • Nota Débito
+  • Comprobante de Pago
+  • Factura Electrónica (FE)
+
+
+2.9. FRONTEND - INTERFAZ DE USUARIO
+
+Concepto: Aplicación web moderna receptiva para interacción con 
+el backend.
+
+Componentes Técnicos:
+  • Framework: Vue.js 3 (Composition API)
+  • Enrutamiento: Vue Router 4
+  • Estado Global: Pinia
+  • Estilos: Tailwind CSS
+  • HTTP: Axios
+  • Gráficos: Chart.js + Vue-Chartjs
+
+Estructura del Frontend:
+  /src
+  ├── components/     → Componentes reutilizables (Vue SFC)
+  ├── views/          → Vistas principales por módulo
+  ├── services/       → Servicios HTTP (comunicación con API)
+  ├── stores/         → Store global (Pinia)
+  ├── router/         → Definición de rutas
+  ├── assets/         → Imágenes, fuentes, estilos
+  └── App.vue         → Componente raíz
+
+Características del Frontend:
+  • Diseño responsive (funciona en desktop, tablet, móvil)
+  • Validación de formularios en cliente
+  • Manejo de errores y notificaciones
+  • Carga de archivos (PDF, XML)
+  • Gráficos interactivos
+  • Tablas con búsqueda, filtrado y paginación
+  • Autenticación con JWT
+  • Actualización automática de datos
+
+
+2.10. MIDDLEWARE Y UTILIDADES
+
+Seguridad y Validación:
+  • auth.js: Autenticación JWT y autorización por roles
+  • upload.js: Validación de carga de archivos
+  • CORS: Permite solicitudes desde frontend
+  • Helmet: Headers de seguridad HTTP
+  • Express Validator: Validación de datos entrada
+
+Logging y Monitoreo:
+  • Morgan: Logging de solicitudes HTTP
+  • Winston: Logging estructurado de eventos
+  • Compression: Compresión de respuestas
+
+
+================================================================================
+SECCIÓN 3: EVALUACIÓN DE SEGURIDAD
+================================================================================
+
+3.1. EVALUACIÓN GENERAL
+
+Calificación Seguridad: ⭐⭐⭐⭐ (4 de 5 estrellas)
+
+El sistema implementa medidas de seguridad robustas para una aplicación 
+empresarial. Tiene protecciones básicas a intermedias implementadas, con 
+algunos puntos que podrían mejorarse para alcanzar máxima seguridad.
+
+3.2. FORTALEZAS DE SEGURIDAD
+
+✅ Autenticación Robusta:
+   - Uso de JWT para manejo de sesiones
+   - Contraseñas hasheadas con bcrypt (10 rondas)
+   - Validación de tokens en cada solicitud protegida
+   - Expiración de tokens configurable
+   - Tokens firmados criptográficamente
+
+✅ Control de Acceso:
+   - Sistema de roles (admin, manager, user, analyst)
+   - Middleware de autorización verificando permisos
+   - Protección de rutas por nivel de acceso
+   - Separación de responsabilidades por rol
+
+✅ Headers de Seguridad:
+   - Helmet.js implementado (protege contra XSS, Clickjacking, etc.)
+   - CORS configurado (no acepta tokens de cualquier origen)
+   - Content Security Policy (CSP)
+
+✅ Encriptación de Datos:
+   - Contraseñas encriptadas
+   - JWT firmados con clave secreta
+   - Conexión a BD con credenciales en variables de entorno
+
+✅ Validación de Entrada:
+   - Express Validator en rutas
+   - Sanitización de datos
+   - Escape en queries SQL
+   - UUID para IDs (generas contra IDOR)
+
+✅ Protección SQL:
+   - Consultas parametrizadas (prepared statements)
+   - Pool de conexiones MySQL seguro
+   - No hay SQL injection visible en el código
+
+✅ Cifrado de Datos en Tránsito:
+   - HTTPS recomendado en producción
+   - JWT Bearer tokens
+   - CORS restrictivo
+
+✅ Auditoría:
+   - Campos de auditoría: created_by, updated_at
+   - Registro de usuarios que realizan acciones
+   - Timestamps en cambios de estado
+
+
+3.3. ÁREAS QUE PODRÍAN MEJORARSE
+
+⚠️ Nivel bajo - Implementable fácilmente:
+
+  • Rate Limiting: Express-rate-limit está instalado pero necesita 
+    configuración más refinada (especialmente en login)
+    
+  • Validación de Archivo: Middleware de upload.js podría tener validaciones 
+    más estrictas de tipo MIME y tamaño
+    
+  • Logging de Seguridad: Winston instalado pero logs de intentos fallidos 
+    de acceso podrían ser más detallados
+    
+  • HTTPS: En producción debe usarse obligatoriamente (usar 
+    redirect HTTP → HTTPS)
+    
+  • Session Timeout: Implementar cierre automático por inactividad
+    
+  • Dos Factores (2FA): No está implementado (recomendable para usuarios 
+    administrativos)
+
+⚠️ Nivel medio - Recomendable agregar:
+
+  • Encriptación de Datos Sensibles: NIT, Cédula, Datos bancarios podrían 
+    cifrarse en reposo (AES-256)
+    
+  • Audit Trail: Registro detallado y inmutable de todas las acciones 
+    (especialmente cambios en facturas)
+    
+  • Web Application Firewall (WAF): En producción usar WAF (AWS WAF, 
+    Cloudflare, etc.)
+    
+  • Backup Automático: Plan de backup y recuperación ante desastres
+    
+  • Versionado de API: /api/v1/ para compatibilidad hacia atrás
+
+
+3.4. CONCLUSIÓN SOBRE SEGURIDAD
+
+La aplicación tiene un enfoque de seguridad SÓLIDO apropiado para 
+una aplicación empresarial típica. Las fortalezas clave son:
+
+  • Autenticación y autorización bien implementadas
+  • Protección contra ataques comunes (SQL injection, XSS)
+  • Datos sensibles protegidos
+  • CORS y headers de seguridad configurados
+
+Para alcanzar máxima seguridad (S de 5 estrellas), se recomienda 
+implementar: 2FA, cifrado de datos en reposo, WAF, audit trail 
+más detallado y rate limiting más agresivo.
+
+ES SEGURO para usar en producción con ambiente controlado (acceso 
+restringido, backups, HTTPS obligatorio).
+
+
+================================================================================
+SECCIÓN 4: TIPO DE APLICACIÓN
+================================================================================
+
+4.1. CLASIFICACIÓN PRINCIPAL
+
+Tipo: APLICACIÓN WEB EMPRESARIAL / ERP MODULAR
+
+4.2. SUBCATEGORÍAS
+
+  • Sector: Financial Software / Accounting Software
+  • Modelo: SaaS Ready (Software as a Service)
+  • Arquitectura: Monolítico con separación Backend/Frontend
+  • Despliegue: Cloud Ready (Node.js + MySQL)
+  • Escala: SME/PYME (Pequeñas y Medianas Empresas)
+
+
+4.3. CARACTERÍSTICAS FUNCIONALES
+
+├── Gestión Contable
+│   └── Facturación, Presupuestos, Gastos
+│
+├── Control Financiero
+│   └── Aprobaciones multinivel, Seguimiento presupuestario
+│
+├── Administración de Usuarios
+│   └── Roles, Permisos, Auditoría
+│
+├── Reportes Analíticos
+│   └── Dashboards, Gráficos, KPIs
+│
+└── Cumplimiento Legal
+    └── DIAN (Impuestos colombianos), Auditoría
+
+
+4.4. CARACTERÍSTICAS TÉCNICAS
+
+Backend:
+  • Node.js + Express.js (JavaScript en servidor)
+  • MySQL 5.7+ (Relacional)
+  • REST API bien estructurada
+  • Modelo MVC (Models, Controllers, Routes)
+  • Middlewares especializados
+
+Frontend:
+  • Vue.js 3 (JavaScript moderno, Composition API)
+  • SPA (Single Page Application)
+  • Responsive design (Mobile-first)
+  • Estado global con Pinia
+  • Gráficos con Chart.js
+
+DevOps:
+  • Jest para testing
+  • Cypress para E2E testing
+  • Migraciones de BD versionadas
+  • Seeders para datos iniciales
+
+
+4.5. PROBLEMAS QUE RESUELVE
+
+1. AUTOMATIZACIÓN:
+   - Elimina captura manual en múltiples sistemas
+   - Cálculos automáticos (impuestos, descuentos)
+   - Workflow automático de aprobaciones
+
+2. VISIBILIDAD:
+   - Dashboards en tiempo real
+   - Estado actual de facturas
+   - Ejecución presupuestaria al segundo
+
+3. COMPLIANCE:
+   - Registro de auditoría completo
+   - Cumplimiento DIAN
+   - Trazabilidad completa de documentos
+
+4. EFICIENCIA:
+   - Reduce tiempo de procesamiento
+   - Menos errores humanos
+   - Integración de procesos
+
+5. DECISIONES:
+   - Reportes históricos
+   - Análisis de tendencias
+   - KPIs financieros
+
+4.6. CASOS DE USO IDEALES
+
+Perfecto para organizaciones que:
+  ✓ Manejan múltiples centros de costo
+  ✓ Necesitan control presupuestario estricto
+  ✓ Requieren auditoría y trazabilidad
+  ✓ Operan en Colombia (DIAN)
+  ✓ Tienen 50 a 500 usuarios simultáneos
+  ✓ Necesitan aprobaciones en múltiples niveles
+  ✓ Procesan 100+ facturas al mes
+  ✓ Requieren integración financiera
+
+4.7. VENTAJAS ARQUITECTÓNICAS
+
+  • Escalabilidad horizontal (backend stateless)
+  • Separación clara de responsabilidades
+  • Fácil de hacer testing
+  • Moderna y mantenible
+  • Desacoplada (frontend/backend)
+  • Compatible con microservicios futuros
+  • Base de datos normalizada
+  • API REST estándar
+
+
+4.8. MADUREZ DEL PROYECTO
+
+Estado de Desarrollo:
+  • ✅ Funcionalidades principales completadas
+  • ✅ Testing (Unit, Integration, E2E)
+  • ✅ Documentación extensiva
+  • ✅ Migraciones de BD versionadas
+  • ✅ Error handling implementado
+  • ✅ Logging configurado
+  • ~ Depuración y optimización en curso
+
+Listo para: 
+  • Pruebas en ambiente staging
+  • Feedback de usuarios reales
+  • Optimización de performance
+  • Preparación para producción
+
+
+================================================================================
+SECCIÓN 5: RESUMEN EJECUTIVO Y RECOMENDACIONES
+================================================================================
+
+5.1. QUE ES ESTA APLICACIÓN (EN SIMPLE)
+
+Es un sistema que una organización usa para:
+  1. Registrar todas sus facturas de gastos
+  2. Planificar presupuestos por áreas
+  3. Monitorear gastos vs presupuesto
+  4. Autorizar gastos con múltiples gerentes
+  5. Generar reportes financieros
+
+
+5.2. PARA QUIÉN ES
+
+Para empresas medianas (50-500 empleados) que:
+  - Tienen múltiples departamentos/centros de costo
+  - Necesitan control financiero estricto
+  - Operan principalmente en Colombia
+  - Quieren reducir trámites administrativos
+
+
+5.3. SEGURIDAD: VEREDICTO FINAL
+
+✅ SEGURA - Recomendada para Producción
+
+Implementa prácticas estándar de industria. Con las mejoras sugeridas 
+en la sección 3.3, alcanzaría máximo nivel de seguridad.
+
+Riesgos identificados: BAJOS
+Mitigación: Implementable en corto plazo
+
+
+5.4. RECOMENDACIONES INMEDIATAS
+
+CRÍTICAS (Antes de Producción):
+  1. Activar HTTPS obligatorio
+  2. Configurar rate-limiting en especial en /api/auth/login
+  3. Implementar backups automáticos diarios
+  4. Configurar monitoreo y alertas
+
+IMPORTANTES (Próximo sprint):
+  1. Implementar 2FA para usuarios admin
+  2. Mejorar logging de seguridad
+  3. Documentar plan de recuperación ante desastres
+  4. Pruebas de carga/stress
+
+MEJORAS (Siguiente fase):
+  1. Encriptación de datos en reposo
+  2. Integración con sistema de auditoría inmutable
+  3. API versioning
+  4. Integración con ERP más grande si es necesario
+
+
+5.5. PRÓXIMAS FASES DE DESARROLLO
+
+Fase 2: Integraciones
+  - Conectar con sistemas bancarios
+  - Importar facturas automáticas
+  - Exportar a contabilidad
+
+Fase 3: Automatización
+  - Procesamiento de facturas con IA
+  - Extracción de datos OCR
+  - Aprobaciones automáticas por reglas
+
+Fase 4: Expansión
+  - Soporte multi-empresa
+  - Consolidación de reportes
+  - API pública para partners
+
+
+================================================================================
+CONCLUSIÓN
+================================================================================
+
+El proyecto "Sistema de Gestión de Facturas y Presupuestos" es una 
+aplicación web empresarial bien estructurada, moderna y segura. 
+
+Está diseñada para pequeñas y medianas empresas que necesitan automatizar 
+sus procesos financieros y administrativos, con especial énfasis en control 
+de presupuestos, facturación y trazabilidad.
+
+La arquitectura es solid, la seguridad es adecuada, y el código está escrito 
+siguiendo buenas prácticas de desarrollo. El proyecto está listo para 
+migración a ambiente de staging con posterior lanzamiento a producción.
+
+Con las mejoras de seguridad sugeridas implementadas, sería una solución 
+confiable y profesional para el mercado empresarial colombiano.
+
+
+================================================================================
+                              FIN DEL INFORME
+================================================================================
+
+Documento preparado por: Análisis Automatizado
+Fecha de elaboración: 22 de febrero de 2026
+Versión: 1.0
+Estado: Completo
