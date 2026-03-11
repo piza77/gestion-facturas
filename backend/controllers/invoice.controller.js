@@ -211,6 +211,85 @@ exports.getInvoiceStats = async (req, res) => {
   }
 };
 
+// New function: getDashboardStats
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const stats = await InvoiceModel.getStats(req.query);
+    const byMonth = await InvoiceModel.getByMonth(new Date().getFullYear());
+    const topProviders = await InvoiceModel.getTopProviders(10);
+    
+    res.json({
+      stats,
+      byMonth,
+      topProviders
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// NUEVO: Reporte de Caja Menor
+exports.getPettyCashReport = async (req, res) => {
+  try {
+    const filters = {
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+      costCenterId: req.query.costCenterId,
+      // Usaremos is_reimbursable (Reembolsable) como el flag para la "Caja Menor"
+      // ya que funcionalmente representan gastos directos/chicos de empleados
+      isPettyCash: true 
+    };
+
+    // Hacemos el query directo porque Invoice.findAll no filtra por is_reimbursable actualmente
+    let sql = `
+      SELECT i.*,
+             it.name as invoice_type_name,
+             p.business_name as provider_name,
+             cc.name as cost_center_name,
+             CONCAT(e.first_name, ' ', e.last_name) as employee_name
+      FROM invoices i
+      LEFT JOIN invoice_types it ON i.invoice_type_id = it.id
+      LEFT JOIN providers p ON i.provider_id = p.id
+      LEFT JOIN cost_centers cc ON i.cost_center_id = cc.id
+      LEFT JOIN employees e ON i.employee_id = e.id
+      WHERE i.is_reimbursable = 1
+    `;
+    const params = [];
+
+    if (filters.costCenterId) {
+      sql += ' AND i.cost_center_id = ?';
+      params.push(filters.costCenterId);
+    }
+
+    if (filters.startDate) {
+      sql += ' AND i.issue_date >= ?';
+      params.push(filters.startDate);
+    }
+
+    if (filters.endDate) {
+      sql += ' AND i.issue_date <= ?';
+      params.push(filters.endDate);
+    }
+
+    sql += ' ORDER BY i.issue_date DESC';
+
+    const db = require('../config/database');
+    const invoices = await db.query(sql, params);
+
+    // Calcular totales
+    const totalAmount = invoices.reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0);
+
+    res.json({
+      total_invoices: invoices.length,
+      total_amount: totalAmount,
+      invoices: invoices
+    });
+  } catch (error) {
+    console.error('Error generating petty cash report:', error);
+    res.status(500).json({ error: 'Error al generar el reporte de caja menor' });
+  }
+};
+
 exports.getInvoicesByMonth = async (req, res) => {
   try {
     const year = req.query.year || new Date().getFullYear();

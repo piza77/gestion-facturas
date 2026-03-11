@@ -40,21 +40,21 @@ export default {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (data) => api.post('/auth/register', data),
   getCurrentUser: () => api.get('/auth/me'),
-  
+
   // Users
   getUsers: (params) => api.get('/users', { params }),
   getUser: (id) => api.get(`/users/${id}`),
   createUser: (data) => api.post('/users', data),
   updateUser: (id, data) => api.put(`/users/${id}`, data),
   deleteUser: (id) => api.delete(`/users/${id}`),
-  
+
   // Employees
   getEmployees: (params) => api.get('/employees', { params }),
   getEmployee: (id) => api.get(`/employees/${id}`),
   createEmployee: (data) => api.post('/employees', data),
   updateEmployee: (id, data) => api.put(`/employees/${id}`, data),
   deleteEmployee: (id) => api.delete(`/employees/${id}`),
-  
+
   // Providers
   getProviders: (params) => api.get('/providers', { params }),
   getProvider: (id) => api.get(`/providers/${id}`),
@@ -62,7 +62,7 @@ export default {
   updateProvider: (id, data) => api.put(`/providers/${id}`, data),
   deleteProvider: (id) => api.delete(`/providers/${id}`),
   getProviderInvoices: (id) => api.get(`/providers/${id}/invoices`),
-  
+
   // Cost Centers
   getCostCenters: (params) => api.get('/cost-centers', { params }),
   getCostCenter: (id) => api.get(`/cost-centers/${id}`),
@@ -84,13 +84,13 @@ export default {
   getDefaultBudgetTemplate: () => api.get('/budget/template/default'),
   getBudgetSummary: (params) => api.get('/budget/summary', { params }),
   assignBudgetFromTemplate: (costCenterId) => api.post(`/budget/assign-template/${costCenterId}`),
-  
+
   // Budget Execution & Tracking
   addBudgetExpense: (categoryId, data) => api.post(`/budget/categories/${categoryId}/expenses`, data),
   getBudgetExecution: (costCenterId) => api.get(`/budget/execution/${costCenterId}`),
   getBudgetReport: (costCenterId) => api.get(`/budget/report/${costCenterId}`),
   sendBudgetNotification: (costCenterId, data) => api.post(`/budget/notification/${costCenterId}`, data),
-  
+
   // Budget Items Management
   createBudgetItem: (data) => api.post('/budget/items', data),
   getBudgetItems: (categoryId) => api.get(`/budget/items/category/${categoryId}`),
@@ -100,7 +100,7 @@ export default {
   updateItemStatus: (itemId, status) => api.patch(`/budget/items/${itemId}/status`, { status }),
   approveItem: (itemId, comments) => api.post(`/budget/items/${itemId}/approve`, { comments }),
   getItemsSummary: (categoryId) => api.get(`/budget/items-summary/category/${categoryId}`),
-  
+
   // Invoices
   getInvoices: (params) => api.get('/invoices', { params }),
   getInvoice: (id) => api.get(`/invoices/${id}`),
@@ -112,10 +112,11 @@ export default {
   }),
   updateInvoiceStatus: (id, data) => api.patch(`/invoices/${id}/status`, data),
   deleteInvoice: (id) => api.delete(`/invoices/${id}`),
-  
+  getPettyCashReport: (params) => api.get('/invoices/reports/petty-cash', { params }),
+
   // Invoice Types
   getInvoiceTypes: (params) => api.get('/invoice-types', { params }),
-  
+
   // Dashboard
   getDashboardStats: (params) => api.get('/dashboard/stats', { params }),
   getMonthlyData: (year) => api.get(`/dashboard/monthly/${year}`),

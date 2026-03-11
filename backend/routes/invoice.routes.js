@@ -11,11 +11,15 @@ const {
   updateInvoiceStatus,
   getInvoiceStats,
   getInvoicesByMonth,
-  getTopProviders
+  getTopProviders,
+  getPettyCashReport
 } = require('../controllers/invoice.controller');
 
 // Listar facturas
 router.get('/', authenticate, getInvoices);
+
+// Obtener reporte de Caja Menor (Petty Cash)
+router.get('/reports/petty-cash', authenticate, authorize('admin', 'manager', 'analyst'), getPettyCashReport);
 
 // Obtener factura por ID
 router.get('/:id', authenticate, getInvoiceById);

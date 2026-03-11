@@ -4,7 +4,7 @@
     <div class="p-6 border-b border-slate-700/50 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 backdrop-blur">
       <div class="flex items-center gap-3 mb-2">
         <div class="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/50">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
         </div>
@@ -58,6 +58,17 @@
       </router-link>
 
       <router-link
+        to="/petty-cash"
+        class="nav-link"
+        active-class="bg-blue-700"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Caja Menor
+      </router-link>
+
+      <router-link
         to="/providers"
         class="nav-link"
         active-class="bg-blue-700"
@@ -103,11 +114,28 @@
       </router-link>
     </div>
 
-    <!-- Logout Button -->
-    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-700">
+    <!-- Actions (Theme + Logout) -->
+    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700/50 space-y-3">
+      <!-- Dark Mode Toggle -->
+      <button
+        @click="themeStore.toggleTheme()"
+        class="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-600/50"
+      >
+        <div class="flex items-center gap-3">
+          <svg v-if="!themeStore.isDark" class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          <svg v-else class="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+          <span>{{ themeStore.isDark ? 'Modo Claro' : 'Modo Oscuro' }}</span>
+        </div>
+      </button>
+
+      <!-- Logout Button -->
       <button
         @click="handleLogout"
-        class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 transition-colors"
+        class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-red-600/90 hover:bg-red-700 hover:shadow-lg hover:shadow-red-900/50 transition-all font-medium"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -120,8 +148,10 @@
 
 <script setup>
 import { useAuthStore } from '../stores/auth'
+import { useThemeStore } from '../stores/theme'
 
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 
 const handleLogout = () => {
   if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
@@ -132,6 +162,9 @@ const handleLogout = () => {
 
 <style scoped>
 .nav-link {
-  @apply flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors;
+  @apply flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition-colors font-medium border border-transparent hover:border-white/5;
+}
+.router-link-active {
+  @apply bg-gradient-to-r from-blue-600/80 to-indigo-600/80 border-blue-500/30 shadow-lg shadow-blue-900/20 text-white;
 }
 </style>

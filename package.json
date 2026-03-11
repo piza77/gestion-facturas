@@ -1,4 +1,17 @@
 {
+  "name": "gestion-facturas",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Facturas",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "cd backend && npm run dev",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "test": "cd backend && npm test"
+  },
+  "keywords": ["facturas", "invoices"],
+  "author": "",
+  "license": "MIT",
   "devDependencies": {
     "cypress": "^15.8.1"
   }

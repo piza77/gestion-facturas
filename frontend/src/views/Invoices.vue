@@ -222,7 +222,7 @@
                 <div class="col-span-2 flex items-center gap-4">
                   <label class="flex items-center gap-2 cursor-pointer">
                     <input v-model="form.isReimbursable" type="checkbox" class="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500" />
-                    <span class="text-sm font-semibold text-gray-700">¿Es Reembolsable?</span>
+                    <span class="text-sm font-semibold text-gray-700">¿Es Caja Menor / Reembolsable?</span>
                   </label>
                 </div>
               </div>
