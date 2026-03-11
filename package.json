@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "Sistema de Gestión de Facturas",
   "main": "backend/server.js",
+  "private": true,
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "cd backend && npm run dev",
-    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
     "test": "cd backend && npm test"
   },
   "keywords": ["facturas", "invoices"],
@@ -14,14 +16,5 @@
   "license": "MIT",
   "devDependencies": {
     "cypress": "^15.8.1"
-  },
-  "name": "gestion-facturas",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "start": "npm run start --prefix backend",
-    "dev:backend": "npm run dev --prefix backend",
-    "dev:frontend": "npm run dev --prefix frontend",
-    "build:frontend": "npm run build --prefix frontend"
   }
 }
