@@ -8,6 +8,7 @@
     "npm": "10.x"
   },
   "scripts": {
+    "setup": "npm install && npm install --cwd backend",
     "start": "node ./backend/server.js",
     "dev": "cd backend && npm run dev",
     "test": "cd backend && npm test"
