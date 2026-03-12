@@ -5,7 +5,7 @@
   "main": "backend/server.js",
   "private": true,
   "scripts": {
-    "start": "echo 'Use Procfile for deployment'",
+    "start": "bash start.sh",
     "dev": "cd backend && npm run dev",
     "test": "cd backend && npm test"
   },
