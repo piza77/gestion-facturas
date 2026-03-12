@@ -5,7 +5,7 @@
   "main": "backend/server.js",
   "private": true,
   "scripts": {
-    "start": "bash start.sh",
+    "start": "cd backend && npm ci && npm start",
     "dev": "cd backend && npm run dev",
     "test": "cd backend && npm test"
   },
