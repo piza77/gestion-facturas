@@ -3,11 +3,12 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
+# Copy from frontend directory since Docker context is at project root
+COPY frontend/package*.json ./
 
 RUN npm install --legacy-peer-deps
 
-COPY . .
+COPY frontend . .
 
 RUN npm run build
 
@@ -16,7 +17,7 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Install a simple HTTP server to serve the static files
+# Install serve to serve static files
 RUN npm install -g serve
 
 COPY --from=builder /app/dist ./dist
