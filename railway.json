@@ -1,8 +1,5 @@
 {
-  "build": {
-    "builder": "nixpacks"
-  },
-  "deploy": {
-    "startCommand": "npm --prefix backend ci && npm --prefix backend start"
-  }
+  "buildCommand": "echo 'Railway build'",
+  "startCommand": "npm ci && npm --prefix backend ci && npm --prefix backend start"
 }
+
