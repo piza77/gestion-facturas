@@ -7,9 +7,6 @@ npm-debug.log
 .venv
 .DS_Store
 uploads
-dist
-build
-coverage
 .pytest_cache
 cypress/videos
 cypress/screenshots
