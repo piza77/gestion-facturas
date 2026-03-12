@@ -1,1 +1,1 @@
-web: npm run build && npm start
+web: sh -c 'cd backend && npm install && npm start'
