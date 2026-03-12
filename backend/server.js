@@ -47,22 +47,11 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/budget', budgetRoutes);
 
 // Health check
-app.get('/health', async (req, res) => {
-  try {
-    const dbConnected = await db.testConnection();
-    res.json({ 
-      status: 'OK', 
-      timestamp: new Date(),
-      database: dbConnected ? 'connected' : 'disconnected'
-    });
-  } catch (error) {
-    res.json({ 
-      status: 'OK', 
-      timestamp: new Date(),
-      database: 'error',
-      error: error.message
-    });
-  }
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date()
+  });
 });
 
 // Ruta raíz
@@ -107,20 +96,14 @@ app.use((err, req, res, next) => {
 // Iniciar servidor
 async function startServer() {
   try {
-    // Probar conexión a BD (sin bloquear el startup si falla)
-    const connected = await db.testConnection();
-    if (!connected) {
-      console.warn('⚠️ Servidor iniciando sin conexión a BD. La BD se conectará cuando esté disponible.');
-    }
-
-    // Iniciar servidor
+    // Iniciar servidor directamente sin verificar BD
     app.listen(PORT, () => {
       console.log('\n' + '='.repeat(50));
       console.log('🚀 Servidor iniciado exitosamente');
       console.log('='.repeat(50));
       console.log(`📍 URL: http://localhost:${PORT}`);
       console.log(`🌍 Entorno: ${process.env.NODE_ENV}`);
-      console.log(`📊 Base de datos: ${process.env.DB_NAME || 'No configurada'}`);
+      console.log(`📊 Base de datos: ${process.env.MYSQLDATABASE || 'No configurada'}`);
       console.log('='.repeat(50) + '\n');
     });
   } catch (error) {
