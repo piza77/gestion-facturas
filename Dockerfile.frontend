@@ -3,12 +3,12 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy from frontend directory since Docker context is at project root
+# Copy frontend files
 COPY frontend/package*.json ./
 
 RUN npm install --legacy-peer-deps
 
-COPY frontend . .
+COPY frontend ./
 
 RUN npm run build
 
