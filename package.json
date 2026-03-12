@@ -5,6 +5,7 @@
   "main": "backend/server.js",
   "private": true,
   "scripts": {
+    "postinstall": "npm install --prefix backend",
     "start": "node ./backend/server.js",
     "dev": "npm run dev --prefix backend",
     "test": "npm test --prefix backend"
