@@ -1,1 +1,1 @@
-web: npm --prefix backend ci && node backend/server.js
+web: npm ci --prefix backend && node ./backend/server.js
