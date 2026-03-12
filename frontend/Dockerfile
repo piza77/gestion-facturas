@@ -1,32 +1,26 @@
-# Use Node.js 22 Alpine image
-FROM node:22-alpine
+# Build stage
+FROM node:22-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json ./
+COPY package*.json ./
 
-# Install dependencies with npm install (not npm ci to avoid lock file issues)
 RUN npm install --legacy-peer-deps
 
-# Copy the rest of the application
 COPY . .
 
-# Build the application
 RUN npm run build
 
-# Use nginx to serve the built app
-FROM nginx:alpine
+# Production stage
+FROM node:22-alpine
 
-# Copy built app from previous stage
-COPY --from=0 /app/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Copy nginx config
-RUN echo 'server { listen 80; location / { root /usr/share/nginx/html; try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
+# Install a simple HTTP server to serve the static files
+RUN npm install -g serve
 
-# Expose port
-EXPOSE 80
+COPY --from=builder /app/dist ./dist
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 3000
+
+CMD ["serve", "-s", "dist", "-l", "3000"]
