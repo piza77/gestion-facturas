@@ -5,8 +5,9 @@
   "main": "backend/server.js",
   "private": true,
   "scripts": {
+    "build": "npm install --prefix backend",
     "postinstall": "npm install --prefix backend",
-    "start": "npm install --prefix backend --production && node ./backend/server.js",
+    "start": "node ./backend/server.js",
     "dev": "npm run dev --prefix backend",
     "test": "npm test --prefix backend"
   },

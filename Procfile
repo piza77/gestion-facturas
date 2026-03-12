@@ -1,1 +1,1 @@
-web: bash -c 'npm install --prefix backend && node backend/server.js'
+web: npm run build && npm start
