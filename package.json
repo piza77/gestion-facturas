@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Sistema de Gestión de Facturas",
   "private": true,
+  "engines": {
+    "node": "22.x",
+    "npm": "10.x"
+  },
   "scripts": {
     "start": "npm --prefix backend ci && npm --prefix backend start",
     "dev": "cd backend && npm run dev",
