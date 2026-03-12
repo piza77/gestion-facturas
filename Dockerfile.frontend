@@ -20,8 +20,13 @@ WORKDIR /app
 # Install serve to serve static files
 RUN npm install -g serve
 
+# Create serve configuration to accept all hosts
+RUN echo '{"rewrites": [{"source": "**", "destination": "/index.html"}]}' > /app/serve.json
+
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Serve as SPA - rewrite all routes to index.html for Vue Router
+# --no-clipboard to suppress warnings about invalid host headers
+CMD ["serve", "-c", "serve.json", "-s", "dist", "-l", "3000"]
