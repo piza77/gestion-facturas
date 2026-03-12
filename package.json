@@ -8,6 +8,7 @@
     "npm": "10.x"
   },
   "scripts": {
+    "postinstall": "npm ci --prefix backend",
     "start": "npm --prefix backend ci && node backend/server.js",
     "dev": "cd backend && npm run dev",
     "test": "cd backend && npm test"
@@ -15,6 +16,9 @@
   "keywords": ["facturas", "invoices"],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  },
   "devDependencies": {
     "cypress": "^15.8.1"
   }
