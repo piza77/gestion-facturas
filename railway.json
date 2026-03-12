@@ -1,5 +1,0 @@
-{
-  "buildCommand": "echo 'Railway build'",
-  "startCommand": "npm ci && npm --prefix backend ci && npm --prefix backend start"
-}
-
