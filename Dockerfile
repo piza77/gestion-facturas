@@ -4,16 +4,18 @@ FROM node:22-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package.json files
+# Copy root package.json
 COPY package.json ./
-COPY backend/package.json ./backend/
+
+# Copy backend directory with its package.json
+COPY backend/ ./backend/
 
 # Install dependencies  
 RUN npm install && \
     cd backend && \
     npm install
 
-# Copy the rest of the application
+# Copy the rest of the application (excluding what we already copied)
 COPY . .
 
 # Expose the port
