@@ -2,7 +2,6 @@
   "name": "gestion-facturas",
   "version": "1.0.0",
   "description": "Sistema de Gestión de Facturas",
-  "main": "backend/server.js",
   "private": true,
   "scripts": {
     "start": "cd backend && npm ci && npm start",
