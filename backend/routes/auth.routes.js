@@ -8,12 +8,20 @@ const { authenticate } = require('../middleware/auth');
 
 // Generar token
 const generateToken = (userId, role) => {
+  // Validar y usar expiresIn con fallback robusto
+  let expiresIn = '24h'; // Default seguro
+  
+  if (process.env.JWT_EXPIRES_IN && process.env.JWT_EXPIRES_IN.trim()) {
+    expiresIn = process.env.JWT_EXPIRES_IN.trim();
+    console.log(`[Auth] Using JWT_EXPIRES_IN from env: ${expiresIn}`);
+  } else {
+    console.log(`[Auth] Using default JWT_EXPIRES_IN: ${expiresIn}`);
+  }
+  
   return jwt.sign(
     { userId, role }, 
     process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN || '24h' // Fallback a 24h si no está definido
-    }
+    { expiresIn }
   );
 };
 
