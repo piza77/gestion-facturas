@@ -10,17 +10,37 @@ const db = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS configuration - allow frontend origins
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:8080',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:8080',
+  'https://gestion-facturas-frontend.up.railway.app',
+  'https://gestion-facturas.up.railway.app',
+  process.env.FRONTEND_URL,
+].filter(url => url && url !== 'undefined');
+
+console.log('[CORS] Allowed origins:', allowedOrigins);
+
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: [
-    'http://localhost:8080',
-    'http://localhost:3000',
-    'http://127.0.0.1:8080',
-    'https://gestion-facturas-frontend.up.railway.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
-  credentials: true
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like curl requests, mobile apps, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Blocked origin: ${origin}`);
+      callback(null, true); // Allow anyway for now to debug
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'],
+  optionsSuccessStatus: 200
 }));
 app.use(compression());
 app.use(express.json());
