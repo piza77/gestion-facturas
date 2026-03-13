@@ -6,6 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 const DIST_DIR = path.join(__dirname, 'dist');
 
+// Force rebuild - clean npm cache
 console.log(`[Server] Starting Express server...`);
 console.log(`[Server] DIST_DIR: ${DIST_DIR}`);
 console.log(`[Server] PORT: ${PORT}`);

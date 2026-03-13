@@ -8,11 +8,13 @@ COPY . .
 # Navigate to frontend
 WORKDIR /app/frontend
 
-# Install dependencies (with devDependencies for build)
-# Do NOT set NODE_ENV=production yet - we need devDependencies to build
-RUN npm install --legacy-peer-deps
+# Clean up any leftover caches
+RUN rm -rf node_modules dist .cache
 
-# Build Vue app (vue-cli-service is in devDependencies)
+# Install dependencies (fresh, no cache)
+RUN npm cache clean --force && npm install --legacy-peer-deps
+
+# Build Vue app (without cache)
 RUN npm run build
 
 # Verify build succeeded
