@@ -10,6 +10,11 @@ const db = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Force fresh build - clear any stale cache
+console.log('[Server] Initializing backend server...');
+console.log('[Server] JWT_SECRET configured:', !!process.env.JWT_SECRET);
+console.log('[Server] PORT:', PORT);
+
 // CORS configuration using environment variables
 // Read from ALLOWED_ORIGINS env var or use defaults
 const allowedOriginsList = process.env.ALLOWED_ORIGINS
