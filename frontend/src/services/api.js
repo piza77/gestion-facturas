@@ -1,18 +1,22 @@
 import axios from 'axios'
 import router from '../router'
 
-// Detectar dinamicamente si estamos en producción basado en la URL del navegador
-const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+// En Railway (producción, cualquier hostname que no sea localhost)
+// En local (desarrollo, localhost o 127.0.0.1)
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
 
-// En Railway, apunta al backend en Railway
-// En desarrollo local, apunta a localhost
-const API_BASE_URL = isProduction 
-  ? 'https://gestion-facturas-production.up.railway.app/api'
-  : 'http://localhost:3000/api'
+let API_BASE_URL
+if (isLocalhost) {
+  API_BASE_URL = 'http://localhost:3000/api'
+} else {
+  // Siempre usar HTTPS para Railway
+  API_BASE_URL = 'https://gestion-facturas-production.up.railway.app/api'
+}
 
-console.log(`[API] Using baseURL: ${API_BASE_URL}`)
-console.log(`[API] isProduction: ${isProduction}`)
-console.log(`[API] hostname: ${window.location.hostname}`)
+console.log('[API] Initialization:')
+console.log('  Current hostname:', window.location.hostname)
+console.log('  Is localhost:', isLocalhost)
+console.log('  API Base URL:', API_BASE_URL)
 
 const api = axios.create({
   baseURL: API_BASE_URL,
