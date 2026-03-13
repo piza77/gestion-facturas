@@ -8,6 +8,7 @@ const DIST_DIR = path.join(__dirname, 'dist');
 console.log(`[Server] Starting server...`);
 console.log(`[Server] DIST_DIR: ${DIST_DIR}`);
 console.log(`[Server] __dirname: ${__dirname}`);
+console.log(`[Server] Using Dockerfile.frontend configuration`);
 
 // Check if dist exists
 if (!fs.existsSync(DIST_DIR)) {
