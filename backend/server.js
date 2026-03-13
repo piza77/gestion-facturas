@@ -10,37 +10,48 @@ const db = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS configuration - allow frontend origins
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:8080',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:8080',
-  'https://gestion-facturas-frontend.up.railway.app',
-  'https://gestion-facturas.up.railway.app',
-  process.env.FRONTEND_URL,
-].filter(url => url && url !== 'undefined');
+// CORS configuration using environment variables
+// Read from ALLOWED_ORIGINS env var or use defaults
+const allowedOriginsList = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : [
+      'http://localhost:3000',
+      'http://localhost:8080',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:8080',
+      'https://gestion-facturas-frontend.up.railway.app',
+      'https://gestion-facturas.up.railway.app'
+    ];
 
-console.log('[CORS] Allowed origins:', allowedOrigins);
+console.log('[CORS] Allowed origins configured:', allowedOriginsList);
+console.log('[CORS] Environment ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS || 'not set (using defaults)');
 
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like curl requests, mobile apps, etc.)
-    if (!origin) return callback(null, true);
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like curl, mobile apps, etc.)
+    if (!origin) {
+      console.log('[CORS] No origin header - allowing');
+      return callback(null, true);
+    }
     
-    if (allowedOrigins.includes(origin)) {
+    // Check if origin is in allowed list
+    if (allowedOriginsList.includes(origin)) {
+      console.log(`[CORS] ✅ Allowed origin: ${origin}`);
       callback(null, true);
     } else {
-      console.warn(`[CORS] Blocked origin: ${origin}`);
-      callback(null, true); // Allow anyway for now to debug
+      console.warn(`[CORS] ❌ BLOCKED origin: ${origin}`);
+      // For testing/debugging, we allow it anyway but log it
+      // In production, you might want to reject: callback(new Error('CORS not allowed'));
+      callback(null, true);
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'],
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  maxAge: 86400 // 24 hours
 }));
 app.use(compression());
 app.use(express.json());
