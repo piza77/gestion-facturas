@@ -1,10 +1,18 @@
 import axios from 'axios'
 import router from '../router'
 
-// Use Railway backend URL in production, localhost in development
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
+// Detectar dinamicamente si estamos en producción basado en la URL del navegador
+const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+
+// En Railway, apunta al backend en Railway
+// En desarrollo local, apunta a localhost
+const API_BASE_URL = isProduction 
   ? 'https://gestion-facturas-production.up.railway.app/api'
   : 'http://localhost:3000/api'
+
+console.log(`[API] Using baseURL: ${API_BASE_URL}`)
+console.log(`[API] isProduction: ${isProduction}`)
+console.log(`[API] hostname: ${window.location.hostname}`)
 
 const api = axios.create({
   baseURL: API_BASE_URL,
