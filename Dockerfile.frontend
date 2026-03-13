@@ -1,36 +1,35 @@
 FROM node:22-alpine
 
-# Using Dockerfile.frontend for Railway deployment
 WORKDIR /app
 
-# Copy everything
+# Copy everything from monorepo
 COPY . .
 
-# Navigate to frontend and install + build
+# Navigate to frontend
 WORKDIR /app/frontend
 
 # Set production environment
 ENV NODE_ENV=production
 
-# Install all dependencies (including Express)
+# Install dependencies
 RUN npm install --legacy-peer-deps
 
 # Build Vue app
 RUN npm run build
 
-# Verify dist was created
-RUN test -d dist || (echo "ERROR: dist directory was not created!" && exit 1)
-RUN echo "Build successful. dist/ contents:" && ls -la dist/
+# Verify build succeeded
+RUN test -d dist || (echo "ERROR: dist directory not created" && exit 1)
+RUN ls -la dist/ | head -10
 
-# Change back to app root for running
+# Return to app root
 WORKDIR /app
 
-# Expose default port (Railway may override via PORT env var)
+# Expose default port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 8080), (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
+# Simple healthcheck - just check if port is listening
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 8080) + '/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
 
-# Run the server with Express
+# Run the server
 CMD ["node", "frontend/server.js"]
