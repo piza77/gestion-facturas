@@ -1,8 +1,13 @@
 import axios from 'axios'
 import router from '../router'
 
+// Use Railway backend URL in production, localhost in development
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://gestion-facturas-production.up.railway.app/api'
+  : 'http://localhost:3000/api'
+
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }
