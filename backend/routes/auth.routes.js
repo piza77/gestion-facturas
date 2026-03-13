@@ -8,9 +8,13 @@ const { authenticate } = require('../middleware/auth');
 
 // Generar token
 const generateToken = (userId, role) => {
-  return jwt.sign({ userId, role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN
-  });
+  return jwt.sign(
+    { userId, role }, 
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN || '24h' // Fallback a 24h si no está definido
+    }
+  );
 };
 
 // Register
