@@ -1,5 +1,6 @@
 FROM node:22-alpine
 
+# Using Dockerfile.frontend for Railway deployment
 WORKDIR /app
 
 # Copy everything
