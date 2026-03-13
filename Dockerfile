@@ -7,14 +7,20 @@ WORKDIR /app
 # Copy ALL files from the repository
 COPY . .
 
-# Install root dependencies  
-RUN npm install || true
+# Clean npm cache to force fresh install
+RUN npm cache clean --force
+
+# Install root dependencies if package.json exists
+RUN if [ -f "package.json" ]; then npm install || true; fi
 
 # Install backend dependencies
-RUN npm install --prefix backend || true
+RUN npm install --prefix backend
 
 # Expose the port
 EXPOSE 3000
+
+# Log that we're about to start
+RUN echo "Backend build complete - ready to start"
 
 # Start the application
 CMD ["node", "backend/server.js"]
