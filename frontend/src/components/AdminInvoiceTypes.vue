@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <!-- Admin Section Header -->
+    <!-- Admin Section - Invoice Types Management -->
     <div class="bg-gradient-to-r from-purple-600 to-purple-400 rounded-2xl shadow-lg p-6 text-white">
       <div class="flex justify-between items-center">
         <div>
