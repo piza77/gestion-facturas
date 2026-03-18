@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isAdmin" class="space-y-6">
+  <div class="space-y-6">
     <!-- Admin Section Header -->
     <div class="bg-gradient-to-r from-purple-600 to-purple-400 rounded-2xl shadow-lg p-6 text-white">
       <div class="flex justify-between items-center">
@@ -194,12 +194,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import api from '../services/api'
 
 const authStore = useAuthStore()
-const isAdmin = computed(() => authStore.userRole === 'admin')
 
 const activeTab = ref('types')
 const invoiceTypes = ref([])
