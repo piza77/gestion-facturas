@@ -15,7 +15,10 @@
     "seed": "node seeders/seed.js",
     "migrate": "node migrations/add_invoice_fields.js",
     "migrate:controls": "node migrations/add_invoice_controls.js",
-    "migrate:status": "node migrations/add_invoice_status_tracking.js"
+    "migrate:status": "node migrations/add_invoice_status_tracking.js",
+    "migrate:database-manager": "node run-database-manager-migration.js",
+    "install:database-manager": "node install-database-simple.js",
+    "setup:database-manager": "npm run migrate:database-manager && npm run install:database-manager"
   },
   "keywords": [
     "facturas",

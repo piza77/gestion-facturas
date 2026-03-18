@@ -76,6 +76,7 @@ const invoiceRoutes = require('./routes/invoice.routes');
 const invoiceTypeRoutes = require('./routes/invoiceType.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const budgetRoutes = require('./routes/budget.routes');
+const databaseRoutes = require('./routes/database.routes');
 
 // Rutas
 app.use('/api/auth', authRoutes);
