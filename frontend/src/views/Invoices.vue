@@ -296,6 +296,22 @@
             </div>
           </div>
 
+          <!-- 🆕 SECCIÓN: MOTIVO (Para Créditos/Débitos) -->
+          <div v-if="selectedInvoiceType && ['CC', 'ND'].includes(selectedInvoiceType)" class="border-2 border-orange-300 rounded-xl overflow-hidden bg-orange-50">
+            <div class="px-6 py-4 bg-orange-200 border-b-2 border-orange-300">
+              <h3 class="text-lg font-bold text-orange-900">📌 {{ typeConfig?.specificFields?.reasonLabel || 'Motivo' }}</h3>
+            </div>
+            <div class="p-6 space-y-4 bg-white">
+              <textarea 
+                v-model="form.customReason" 
+                placeholder="Explica el motivo de la devolución o ajuste..."
+                class="w-full px-4 py-3 border-2 border-orange-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent" 
+                rows="4"
+                required
+              ></textarea>
+            </div>
+          </div>
+
           <!-- SECCIÓN 2: MONTOS Y FECHAS -->
           <div class="border-2 border-gray-200 rounded-xl overflow-hidden">
             <button type="button" @click="expandedSections.amounts = !expandedSections.amounts" class="w-full bg-green-50 hover:bg-green-100 px-6 py-4 flex justify-between items-center">
@@ -516,6 +532,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import api from '../services/api'
+import { invoiceTypeConfig, shouldShowField, getFieldConfig } from '../utils/invoiceTypeConfig'
 
 const invoices = ref([])
 const providers = ref([])
@@ -548,6 +565,10 @@ const pagination = ref({
   total: 0,
   totalPages: 0
 })
+
+// 🆕 Configuración dinámica de campos por tipo de documento
+const selectedInvoiceType = ref(null)
+const typeConfig = computed(() => selectedInvoiceType.value ? invoiceTypeConfig[selectedInvoiceType.value] : null)
 
 const form = ref({
   invoiceNumber: '',
@@ -582,6 +603,8 @@ const resetForm = () => {
     isReimbursable: false,
     description: '',
     notes: '',
+    // 🆕 Campo específico para créditos/débitos
+    customReason: '',
     // Autorizaciones
     adminDirectorApproved: false,
     upstreamDirectorApproved: false,
@@ -937,6 +960,40 @@ onMounted(() => {
   loadCostCenters()
   loadInvoiceTypes()
 })
+
+// 🆕 Watcher: Cuando cambia el tipo de documento
+watch(() => form.value.invoiceTypeId, async (newTypeId) => {
+  if (newTypeId) {
+    const type = invoiceTypes.value.find(t => t.id === newTypeId)
+    if (type) {
+      selectedInvoiceType.value = type.code
+      // Resetear secciones expandidas según el tipo
+      if (typeConfig.value) {
+        expandedSections.value = {
+          basic: true,
+          amounts: true,
+          authorizations: typeConfig.value.sections.authorizations !== false,
+          accounting: typeConfig.value.sections.accounting !== false,
+          analysis: typeConfig.value.sections.analysis !== false,
+          payment: typeConfig.value.sections.payment !== false
+        }
+      }
+    }
+  }
+})
+
+// 🆕 Función para verificar si un campo debe mostrarse
+const isFieldVisible = (fieldName) => {
+  if (!selectedInvoiceType.value) return true
+  return shouldShowField(selectedInvoiceType.value, fieldName)
+}
+
+// 🆕 Función para verificar si un campo es requerido
+const isFieldRequired = (fieldName) => {
+  if (!selectedInvoiceType.value) return false
+  const config = getFieldConfig(selectedInvoiceType.value, fieldName)
+  return config.isRequired || false
+}
 
 // Función para calcular el total
 const calculateTotal = () => {

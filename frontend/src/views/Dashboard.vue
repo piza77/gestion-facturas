@@ -1,5 +1,8 @@
 <template>
   <div class="space-y-6">
+    <!-- Admin Section -->
+    <AdminInvoiceTypes v-if="isAdmin" />
+
     <!-- Header -->
     <div class="flex justify-between items-center">
       <div>
@@ -153,11 +156,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import AdminInvoiceTypes from '../components/AdminInvoiceTypes.vue'
 import api from '../services/api'
 
 const authStore = useAuthStore()
+const isAdmin = computed(() => authStore.userRole === 'admin')
 const stats = ref(null)
 const topProviders = ref([])
 const costCenters = ref([])
