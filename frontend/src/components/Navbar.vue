@@ -112,6 +112,18 @@
         </svg>
         Usuarios
       </router-link>
+
+      <router-link
+        v-if="authStore.isAdmin"
+        to="/database-admin"
+        class="nav-link"
+        active-class="bg-blue-700"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-6.586a1 1 0 01-.707-.293l-2.414-2.414a2 2 0 00-1.414-.586H6a2 2 0 00-2 2z"></path>
+        </svg>
+        BD Admin
+      </router-link>
     </div>
 
     <!-- Actions (Theme + Logout) -->

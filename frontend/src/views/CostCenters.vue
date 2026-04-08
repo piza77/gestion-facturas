@@ -78,7 +78,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                 <button @click="openModal(cc)" class="text-blue-600 hover:text-blue-900 font-semibold">Editar</button>
-                <button @click="deleteCostCenter(cc.id)" class="text-red-600 hover:text-red-900 font-semibold">Eliminar</button>
+                <button @click="openDeleteModal(cc)" class="text-red-600 hover:text-red-900 font-semibold">Eliminar</button>
               </td>
             </tr>
             <tr v-if="costCenters.length === 0">
@@ -123,7 +123,7 @@
               <label class="block text-sm font-semibold text-gray-700 mb-2">Presupuesto *</label>
               <div class="relative">
                 <span class="absolute left-3 top-3 text-gray-500 font-semibold">$</span>
-                <input v-model="budgetFormatted" @input="updateBudgetValue" type="text" required 
+                <input :value="budgetFormatted" @input="updateBudgetValue" type="text" required 
                        class="w-full pl-8 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
                        placeholder="0" />
               </div>
@@ -193,8 +193,9 @@
                 </div>
               </div>
             </div>
-            <div v-if="totalPercentage !== 100" class="mt-2 p-2 bg-yellow-100 border-l-4 border-yellow-400 text-yellow-700 text-sm">
-              ⚠️ La distribución debe sumar exactamente 100%
+            <div v-if="Math.abs(totalPercentage - 100) > 0.5" class="mt-2 p-2 bg-red-100 border-l-4 border-red-400 text-red-700 text-sm">
+              ⚠️ La distribución debe estar entre 99.5% y 100.5%<br/>
+              <small>Actual: {{ totalPercentage.toFixed(2) }}%</small>
             </div>
           </div>
 
@@ -239,8 +240,8 @@
               ⚡ Auto-Distribuir
             </button>
             <div class="flex-1"></div>
-            <button @click="saveBudgetDistribution" :disabled="totalPercentage !== 100"
-                    :class="totalPercentage === 100 
+            <button @click="saveBudgetDistribution" :disabled="Math.abs(totalPercentage - 100) > 0.5"
+                    :class="Math.abs(totalPercentage - 100) <= 0.5
                       ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white' 
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
                     class="px-6 py-2 rounded-lg font-semibold">
@@ -631,6 +632,77 @@
         </form>
       </div>
     </div>
+
+    <!-- Modal de Confirmación de Eliminación -->
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+        <div class="bg-gradient-to-r from-red-600 to-pink-600 text-white p-6 rounded-t-2xl">
+          <div class="flex items-center gap-3">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0 4v2M7.08 6.06A9 9 0 1 0 15.94 17.94M7.08 6.06l-5.66 5.66m11.56 0l5.66 5.66"></path>
+            </svg>
+            <div>
+              <h2 class="text-2xl font-bold">Eliminar Centro de Costo</h2>
+              <p class="opacity-90 text-sm">Esta acción no se puede deshacer</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <!-- Información del Centro -->
+          <div class="bg-gray-50 rounded-xl p-4 border-l-4 border-red-500">
+            <div class="text-sm text-gray-600 mb-1">Centro a eliminar:</div>
+            <div class="font-bold text-lg text-gray-900">{{ costCenterToDelete?.code }} - {{ costCenterToDelete?.name }}</div>
+            <div v-if="costCenterToDelete?.budget" class="text-sm text-gray-600 mt-2">
+              Presupuesto asignado: <span class="font-semibold">${{ formatMoney(costCenterToDelete.budget) }}</span>
+            </div>
+          </div>
+
+          <!-- Advertencia de Datos a Borrar -->
+          <div class="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4">
+            <div class="flex gap-2">
+              <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+              </svg>
+              <div>
+                <div class="font-semibold text-yellow-900 mb-1">Se borrará toda la información:</div>
+                <ul class="text-sm text-yellow-800 space-y-1">
+                  <li>✓ Datos del centro de costo</li>
+                  <li>✓ Configuración y parámetros</li>
+                  <li>✓ Información de cliente (si aplica)</li>
+                  <li>✓ Número de contrato</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nota Importante -->
+          <div class="bg-red-50 border-2 border-red-200 rounded-xl p-3">
+            <div class="text-xs text-red-700">
+              ⚠️ <strong>Importante:</strong> El centro de costo se puede eliminar solo si NO tiene:
+              <ul class="mt-1 ml-4 space-y-1">
+                <li>• Empleados asignados</li>
+                <li>• Facturas registradas</li>
+                <li>• Distribuciones de presupuesto</li>
+                <li>• Items de presupuesto</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Botones -->
+          <div class="flex gap-3 pt-4 border-t">
+            <button @click="confirmDeleteCostCenter" 
+                    class="flex-1 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white py-3 rounded-xl font-semibold transition-all transform hover:scale-105">
+              🗑️ Sí, Eliminar Definitivamente
+            </button>
+            <button @click="closeDeleteModal" 
+                    class="px-6 py-3 border-2 border-gray-300 rounded-xl font-semibold hover:bg-gray-50 transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -646,6 +718,8 @@ const showExpenseModal = ref(false)
 const showItemsModal = ref(false)
 const showCreateItemModal = ref(false)
 const showCreateCategoryModal = ref(false)
+const showDeleteModal = ref(false)
+const costCenterToDelete = ref(null)
 const loading = ref(false)
 const editingCenter = ref(null)
 const selectedCenter = ref(null)
@@ -726,17 +800,32 @@ const formatMoney = (value) => {
 }
 
 const formatCurrency = (value) => {
-  const num = parseFloat(value.toString().replace(/[^\d]/g, '')) || 0
-  return new Intl.NumberFormat('es-CO').format(num)
+  const num = parseFloat(value) || 0
+  return new Intl.NumberFormat('es-CO', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(num)
 }
 
 const updateBudgetValue = (event) => {
+  // Extraer solo dígitos
   const value = event.target.value.replace(/[^\d]/g, '')
-  const numValue = parseInt(value) || 0
-  form.value.budget = numValue
-  budgetFormatted.value = formatCurrency(numValue)
+  const numValue = parseInt(value, 10) || 0
   
-  // Actualizar montos de categorías si está abierto el modal de distribución
+  // Actualizar el valor numérico
+  form.value.budget = numValue
+  
+  // Formatear para mostrar
+  if (numValue > 0) {
+    budgetFormatted.value = new Intl.NumberFormat('es-CO', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(numValue)
+  } else {
+    budgetFormatted.value = ''
+  }
+  
+  // Actualizar distribución si está abierta
   if (showBudgetModal.value) {
     budgetCategories.value.forEach(cat => updateCategoryAmount(cat))
   }
@@ -795,7 +884,7 @@ const openModal = (center = null) => {
       clientId: center.client_id || '',
       clientNit: center.client_nit || '',
       contractNumber: center.contract_number || '',
-      isActive: center.is_active
+      isActive: Boolean(center.is_active)
     }
     budgetFormatted.value = formatCurrency(center.budget)
   } else {
@@ -877,6 +966,17 @@ const saveCostCenter = async () => {
 
 const saveBudgetDistribution = async () => {
   try {
+    // Normalizar porcentajes si están muy cerca de 100%
+    const total = totalPercentage.value
+    if (Math.abs(total - 100) <= 0.5 && total !== 100) {
+      const difference = 100 - total
+      if (budgetCategories.value.length > 0) {
+        const lastCategory = budgetCategories.value[budgetCategories.value.length - 1]
+        lastCategory.percentage = Math.round((lastCategory.percentage + difference) * 100) / 100
+        updateCategoryAmount(lastCategory)
+        console.log(`✅ Normalizado: ${total.toFixed(2)}% → 100% (ajustado ${lastCategory.name} a ${lastCategory.percentage}%)`)}
+    }
+    
     // Guardar o actualizar categorías de presupuesto
     for (const category of budgetCategories.value) {
       if (category.percentage > 0) {
@@ -907,16 +1007,28 @@ const saveBudgetDistribution = async () => {
   }
 }
 
-const deleteCostCenter = async (id) => {
-  if (!confirm('¿Está seguro de que desea eliminar este centro de costo?')) return
+const openDeleteModal = async (center) => {
+  costCenterToDelete.value = center
+  showDeleteModal.value = true
+}
+
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  costCenterToDelete.value = null
+}
+
+const confirmDeleteCostCenter = async () => {
+  if (!costCenterToDelete.value) return
   
   try {
-    await api.deleteCostCenter(id)
-    alert('Centro de costo eliminado correctamente')
+    await api.deleteCostCenter(costCenterToDelete.value.id)
+    alert('✅ Centro de costo eliminado correctamente')
+    closeDeleteModal()
     loadCostCenters()
   } catch (error) {
     console.error('Error eliminando centro de costo:', error)
-    alert('Error al eliminar: ' + error.response?.data?.error)
+    const errorMsg = error.response?.data?.error || error.message
+    alert('❌ Error al eliminar:\\n\\n' + errorMsg)
   }
 }
 

@@ -1,4 +1,4 @@
-const { sequelize } = require('../config/database');
+const { query } = require('../config/database');
 const db = require('../models');
 const fs = require('fs').promises;
 const path = require('path');
@@ -14,10 +14,10 @@ class DatabaseService {
    */
   async getAllTables() {
     try {
-      const tables = await sequelize.query(
+      const tables = await query(
         `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME`
       );
-      return tables[0].map(t => t.TABLE_NAME);
+      return tables.map(t => t.TABLE_NAME);
     } catch (error) {
       throw new Error(`Error al obtener tablas: ${error.message}`);
     }
@@ -31,7 +31,7 @@ class DatabaseService {
       // Validar nombre de tabla
       this.validateTableName(tableName);
 
-      const [columns] = await sequelize.query(`
+      const columns = await query(`
         SELECT 
           COLUMN_NAME as name,
           COLUMN_TYPE as type,
@@ -42,14 +42,14 @@ class DatabaseService {
         FROM INFORMATION_SCHEMA.COLUMNS 
         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
         ORDER BY ORDINAL_POSITION
-      `, { replacements: [tableName] });
+      `, [tableName]);
 
-      const [indexes] = await sequelize.query(`
+      const indexes = await query(`
         SELECT * FROM INFORMATION_SCHEMA.STATISTICS 
         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
-      `, { replacements: [tableName] });
+      `, [tableName]);
 
-      const [foreignKeys] = await sequelize.query(`
+      const foreignKeys = await query(`
         SELECT 
           CONSTRAINT_NAME,
           COLUMN_NAME,
@@ -59,7 +59,7 @@ class DatabaseService {
         WHERE TABLE_SCHEMA = DATABASE() 
           AND TABLE_NAME = ?
           AND REFERENCED_TABLE_NAME IS NOT NULL
-      `, { replacements: [tableName] });
+      `, [tableName]);
 
       return {
         tableName,

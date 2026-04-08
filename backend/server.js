@@ -88,6 +88,7 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/invoice-types', invoiceTypeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/budget', budgetRoutes);
+app.use('/api/database', databaseRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -111,7 +112,8 @@ app.get('/', (req, res) => {
       invoices: '/api/invoices',
       invoiceTypes: '/api/invoice-types',
       dashboard: '/api/dashboard',
-      budget: '/api/budget'
+      budget: '/api/budget',
+      database: '/api/database'
     }
   });
 });

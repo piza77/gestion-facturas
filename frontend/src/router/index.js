@@ -59,6 +59,18 @@ const routes = [
     name: 'Users',
     component: () => import('../views/Users.vue'),
     meta: { requiresAuth: true, admin: true }
+  },
+  {
+    path: '/database-admin',
+    name: 'DatabaseAdmin',
+    component: () => import('../views/DatabaseAdmin.vue'),
+    meta: { requiresAuth: true, admin: true }
+  },
+  {
+    path: '/test',
+    name: 'Test',
+    component: () => import('../views/Test.vue'),
+    meta: { requiresAuth: false }
   }
 ]
 

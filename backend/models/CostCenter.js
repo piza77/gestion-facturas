@@ -111,6 +111,28 @@ class CostCenterModel {
       throw new Error('No se puede eliminar el centro de costo porque tiene facturas asociadas');
     }
 
+    // Verificar que no tenga categorías de presupuesto
+    const budgetCategories = await db.query(
+      'SELECT COUNT(*) as count FROM budget_categories WHERE cost_center_id = ?',
+      [id]
+    );
+
+    if (budgetCategories[0].count > 0) {
+      throw new Error('No se puede eliminar el centro de costo porque tiene distribuciones de presupuesto asociadas. Elimine las categorías primero.');
+    }
+
+    // Verificar que no tenga items de presupuesto
+    const budgetItems = await db.query(
+      `SELECT COUNT(bi.id) as count FROM budget_items bi 
+       INNER JOIN budget_categories bc ON bi.category_id = bc.id 
+       WHERE bc.cost_center_id = ?`,
+      [id]
+    );
+
+    if (budgetItems[0].count > 0) {
+      throw new Error('No se puede eliminar el centro de costo porque tiene items de presupuesto asociados. Elimine los items primero.');
+    }
+
     await db.query('DELETE FROM cost_centers WHERE id = ?', [id]);
     return true;
   }

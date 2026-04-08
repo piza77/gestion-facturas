@@ -222,6 +222,31 @@ export const useDatabaseStore = defineStore('database', {
     },
 
     /**
+     * Vaciar tabla
+     */
+    async truncateTable(tableName) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await DatabaseService.truncateTable(tableName);
+        
+        this.successMessage = 'Tabla vaciada exitosamente';
+        
+        // Refrescar datos si es la tabla seleccionada
+        if (this.selectedTable === tableName) {
+          await this.fetchTableData();
+        }
+        
+        return response.data.data;
+      } catch (error) {
+        this.error = error.response?.data?.error || error.message;
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
      * Insertar fila
      */
     async insertRow(tableName, data) {

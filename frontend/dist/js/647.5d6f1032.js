@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunkgestion_facturas_frontend"]=self["webpackChunkgestion_facturas_frontend"]||[]).push([[647],{647:(n,e,t)=>{t.r(e),t.d(e,{default:()=>c});var s=t(641);function u(n,e,t,u,r,a){return(0,s.uX)(),(0,s.CE)("div",null,[...e[0]||(e[0]=[(0,s.Lk)("h1",null,"TEST SIMPLE",-1),(0,s.Lk)("p",null,"Si ves esto, Vue está funcionando",-1)])])}const r={name:"Test"};var a=t(262);const o=(0,a.A)(r,[["render",u]]),c=o}}]);
+//# sourceMappingURL=647.5d6f1032.js.map

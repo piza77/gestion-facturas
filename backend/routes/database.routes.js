@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const databaseController = require('../controllers/database.controller');
-const auth = require('../middleware/auth');
+const databaseService = require('../services/database.service');
+const { authenticate, authorize } = require('../middleware/auth');
 const {
   validateTableName,
   validateTableNameParam,
@@ -28,26 +29,89 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
+// ==================== ENDPOINT DE TESTING (SIN AUTENTICACIÓN) ====================
+/**
+ * GET /api/database/health
+ * Health check del servicio de database (SIN AUTENTICACIÓN)
+ */
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    service: 'database',
+    timestamp: new Date()
+  });
+});
+
+/**
+ * GET /api/database/tables-debug
+ * Debug: obtener tablas sin autenticación (SOLO DESARROLLO)
+ */
+router.get('/tables-debug', async (req, res) => {
+  try {
+    const tables = await databaseService.getAllTables();
+    console.log('[database.routes] Tables debug:', tables);
+    res.json({
+      success: true,
+      count: tables.length,
+      data: tables
+    });
+  } catch (error) {
+    console.error('[database.routes] Error getting tables:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/database/tables/:name/data-debug
+ * Debug: obtener datos de tabla sin autenticación (SOLO DESARROLLO)
+ */
+router.get('/tables/:name/data-debug', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { page = 1, pageSize = 25, ...filters } = req.query;
+
+    const data = await databaseService.getTableData(
+      name,
+      parseInt(page),
+      parseInt(pageSize),
+      filters
+    );
+    res.json({
+      success: true,
+      data: data
+    });
+  } catch (error) {
+    console.error('[database.routes] Error getting table data:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // ==================== RUTAS PÚBLICAS PROTEGIDAS ====================
 
 /**
  * Tablas
  */
 router.get('/tables', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin, 
   databaseController.getAllTables
 );
 
 router.get('/tables/:name', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   databaseController.getTableSchema
 );
 
 router.get('/tables/:name/data', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   validatePagination,
@@ -55,7 +119,7 @@ router.get('/tables/:name/data',
 );
 
 router.post('/tables', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableName(),
   validateTableDefinition,
@@ -63,7 +127,7 @@ router.post('/tables',
 );
 
 router.put('/tables/:name', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   validateTableChanges,
@@ -71,14 +135,14 @@ router.put('/tables/:name',
 );
 
 router.delete('/tables/:name', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   databaseController.dropTable
 );
 
 router.post('/tables/:name/truncate', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   databaseController.truncateTable
@@ -87,7 +151,7 @@ router.post('/tables/:name/truncate',
 // ==================== OPERACIONES EN DATOS ====================
 
 router.post('/tables/:name/rows', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   validateRowData,
@@ -95,7 +159,7 @@ router.post('/tables/:name/rows',
 );
 
 router.put('/tables/:name/rows/:id', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   validateRowData,
@@ -103,7 +167,7 @@ router.put('/tables/:name/rows/:id',
 );
 
 router.delete('/tables/:name/rows/:id', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   databaseController.deleteRow
@@ -112,14 +176,14 @@ router.delete('/tables/:name/rows/:id',
 // ==================== ÍNDICES ====================
 
 router.get('/tables/:name/indexes', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   databaseController.getIndexes
 );
 
 router.post('/tables/:name/indexes', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   validateIndex,
@@ -127,7 +191,7 @@ router.post('/tables/:name/indexes',
 );
 
 router.delete('/tables/:name/indexes/:indexName', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   databaseController.dropIndex
@@ -136,26 +200,26 @@ router.delete('/tables/:name/indexes/:indexName',
 // ==================== BACKUPS ====================
 
 router.post('/backups', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateBackup,
   databaseController.createBackup
 );
 
 router.get('/backups', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   databaseController.listBackups
 );
 
 router.post('/backups/:id/restore', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   databaseController.restoreBackup
 );
 
 router.delete('/backups/:id', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   databaseController.deleteBackup
 );
@@ -163,7 +227,7 @@ router.delete('/backups/:id',
 // ==================== SQL EDITOR ====================
 
 router.post('/sql/execute', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateSqlQuery,
   databaseController.executeSqlQuery
@@ -172,7 +236,7 @@ router.post('/sql/execute',
 // ==================== AUDITORÍA ====================
 
 router.get('/audit', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateAuditLimit,
   databaseController.getAuditLog
@@ -181,7 +245,7 @@ router.get('/audit',
 // ==================== VERSIONADO ====================
 
 router.get('/tables/:name/versions', 
-  auth.verifyToken, 
+  authenticate, 
   requireAdmin,
   validateTableNameParam(),
   databaseController.getVersionHistory

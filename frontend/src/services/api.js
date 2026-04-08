@@ -52,7 +52,8 @@ api.interceptors.response.use(
   }
 )
 
-export default {
+// Objeto con métodos envueltos (para compatibilidad con código existente)
+const apiMethods = {
   // Auth
   login: (credentials) => api.post('/auth/login', credentials),
   register: (data) => api.post('/auth/register', data),
@@ -140,3 +141,7 @@ export default {
   getTopProviders: (limit) => api.get('/dashboard/top-providers', { params: { limit } }),
   getCostCentersSummary: () => api.get('/dashboard/cost-centers')
 }
+
+// Exportar tanto la instancia de axios como los métodos envueltos
+export default apiMethods
+export { api }
